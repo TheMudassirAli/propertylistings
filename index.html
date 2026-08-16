@@ -176,6 +176,37 @@ function youtubeEmbed(url) {
 }
 </script>
 
+
+<style id="social-media-gallery-fix">
+.media-frame.yt-mode iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  border-radius: 12px;
+}
+.media-frame.ig-mode {
+  min-height: 520px;
+  height: auto !important;
+  background: #fff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+  padding: 8px 0;
+}
+.media-frame.ig-mode .instagram-media {
+  margin: 0 auto !important;
+  width: 100% !important;
+  max-width: 540px !important;
+}
+@media (max-width: 640px) {
+  .media-frame.ig-mode {
+    min-height: 500px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="wrap" id="app">
@@ -253,8 +284,52 @@ function formatPrice(l){
 
 function youtubeVideoId(url){
   if(!url) return null;
-  const match = url.toString().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-  return match ? match[1] : null;
+
+  try {
+    const raw = String(url).trim();
+    const u = new URL(raw);
+
+    // youtu.be/VIDEO_ID
+    if(u.hostname === 'youtu.be' || u.hostname === 'www.youtu.be'){
+      return u.pathname.split('/').filter(Boolean)[0] || null;
+    }
+
+    // youtube.com/watch?v=VIDEO_ID
+    if(u.hostname.includes('youtube.com')){
+      const v = u.searchParams.get('v');
+      if(v) return v;
+
+      const parts = u.pathname.split('/').filter(Boolean);
+
+      // youtube.com/shorts/VIDEO_ID
+      const shortsIndex = parts.indexOf('shorts');
+      if(shortsIndex >= 0 && parts[shortsIndex + 1]){
+        return parts[shortsIndex + 1];
+      }
+
+      // youtube.com/embed/VIDEO_ID
+      const embedIndex = parts.indexOf('embed');
+      if(embedIndex >= 0 && parts[embedIndex + 1]){
+        return parts[embedIndex + 1];
+      }
+    }
+  } catch(e) {}
+
+  return null;
+}
+
+function youtubeEmbedUrl(url){
+  const id = youtubeVideoId(url);
+  return id
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0`
+    : null;
+}
+
+function youtubeThumbUrl(url){
+  const id = youtubeVideoId(url);
+  return id
+    ? `https://img.youtube.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`
+    : null;
 }
 function youtubeEmbedUrl(url){
   const id = youtubeVideoId(url);
@@ -274,20 +349,45 @@ function buildMediaList(listing, photos){
   return media;
 }
 
+let instagramScriptPromise = null;
+
 function loadInstagramEmbed(){
-  if(window.instgrm && window.instgrm.Embeds){
-    window.instgrm.Embeds.process();
-    return;
-  }
-  if(document.querySelector('script[data-instagram-embed]')) return;
-  const script = document.createElement('script');
-  script.src = 'https://www.instagram.com/embed.js';
-  script.async = true;
-  script.dataset.instagramEmbed = 'true';
-  script.onload = ()=>{
-    if(window.instgrm && window.instgrm.Embeds) window.instgrm.Embeds.process();
-  };
-  document.body.appendChild(script);
+  return new Promise((resolve) => {
+
+    if(window.instgrm && window.instgrm.Embeds){
+      window.instgrm.Embeds.process();
+      resolve();
+      return;
+    }
+
+    if(instagramScriptPromise){
+      instagramScriptPromise.then(() => {
+        if(window.instgrm && window.instgrm.Embeds){
+          window.instgrm.Embeds.process();
+        }
+        resolve();
+      });
+      return;
+    }
+
+    instagramScriptPromise = new Promise((scriptResolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://www.instagram.com/embed.js';
+      script.async = true;
+
+      script.onload = () => scriptResolve();
+      script.onerror = () => scriptResolve();
+
+      document.body.appendChild(script);
+    });
+
+    instagramScriptPromise.then(() => {
+      if(window.instgrm && window.instgrm.Embeds){
+        window.instgrm.Embeds.process();
+      }
+      resolve();
+    });
+  });
 }
 
 function locationLine(l){
@@ -545,9 +645,20 @@ function renderMainMedia(m){
     el.insertAdjacentHTML('beforeend', `<iframe src="${m.embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`);
   } else if(m.type === 'instagram'){
     el.classList.add('ig-mode');
-    el.insertAdjacentHTML('beforeend', `<blockquote class="instagram-media" data-instgrm-permalink="${m.permalink}" data-instgrm-version="14" style="margin:0;width:100%;"></blockquote>`);
-    loadInstagramEmbed();
-  }
+    const blockquote = document.createElement('blockquote');
+
+  blockquote.className = 'instagram-media';
+  blockquote.setAttribute('data-instgrm-permalink', m.permalink);
+  blockquote.setAttribute('data-instgrm-version', '14');
+
+  blockquote.style.margin = '0 auto';
+  blockquote.style.width = '100%';
+  blockquote.style.maxWidth = '540px';
+
+  el.appendChild(blockquote);
+
+  loadInstagramEmbed();
+}
 }
 
 window.switchMedia = function(index){
