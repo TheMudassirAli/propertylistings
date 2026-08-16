@@ -719,6 +719,30 @@ function renderMainMedia(m){
 
   el.appendChild(blockquote);
 
+  // Initialize Instagram's embed.js after the blockquote is added.
+  loadInstagramEmbed();
+
+  // Fallback if Instagram does not render the embed.
+  setTimeout(() => {
+    const host = document.getElementById('gallery-main');
+    if (!host || !host.contains(blockquote)) return;
+
+    const rendered = host.querySelector('iframe, .instagram-media-rendered');
+    if (!rendered && !host.querySelector('.instagram-fallback')) {
+      const fallback = document.createElement('a');
+      fallback.className = 'instagram-fallback';
+      fallback.href = m.permalink;
+      fallback.target = '_blank';
+      fallback.rel = 'noopener noreferrer';
+      fallback.textContent = 'Open Instagram post →';
+      fallback.style.cssText =
+        'display:flex;align-items:center;justify-content:center;' +
+        'min-height:120px;width:100%;font-weight:600;' +
+        'color:#1f6f5c;text-decoration:none;';
+      host.appendChild(fallback);
+    }
+  }, 4000);
+
   
 }
 }
