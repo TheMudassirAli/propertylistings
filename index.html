@@ -136,6 +136,46 @@
   .toast.show{opacity:1;}
   h1.page-title{font-size:18px;margin:0 0 16px;}
 </style>
+
+<script>
+// Robust media URL helpers
+function getYouTubeId(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(String(url).trim());
+    if (u.hostname.includes("youtu.be")) return u.pathname.split("/").filter(Boolean)[0] || null;
+    if (u.hostname.includes("youtube.com")) {
+      if (u.searchParams.get("v")) return u.searchParams.get("v");
+      const parts = u.pathname.split("/").filter(Boolean);
+      const i = parts.indexOf("shorts");
+      if (i >= 0 && parts[i + 1]) return parts[i + 1];
+      const e = parts.indexOf("embed");
+      if (e >= 0 && parts[e + 1]) return parts[e + 1];
+    }
+  } catch(e) {}
+  return null;
+}
+
+function normalizeInstagramUrl(url) {
+  if (!url) return null;
+  const s = String(url).trim();
+  if (!/instagram\.com/i.test(s)) return null;
+  try {
+    const u = new URL(s);
+    u.search = "";
+    u.hash = "";
+    return u.toString();
+  } catch(e) {
+    return s;
+  }
+}
+
+function youtubeEmbed(url) {
+  const id = getYouTubeId(url);
+  return id ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0` : null;
+}
+</script>
+
 </head>
 <body>
 <div class="wrap" id="app">
@@ -525,5 +565,19 @@ window.shareListing = function(btn){
 
 init();
 </script>
+
+<script>
+// ---- Paste-link media patch ----
+// Accepts normal YouTube/Instagram SHARE links from the Google Form.
+// No embed code is required from the agent.
+(function () {
+  window.propertyListingsMedia = {
+    youtubeId: getYouTubeId,
+    youtubeEmbed: youtubeEmbed,
+    instagramUrl: normalizeInstagramUrl
+  };
+})();
+</script>
+
 </body>
 </html>
