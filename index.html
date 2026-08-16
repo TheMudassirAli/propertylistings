@@ -91,7 +91,7 @@
   }
   .gallery-main.yt-mode{aspect-ratio:16/9;background:#000;}
   .gallery-main.ig-mode{aspect-ratio:auto;min-height:500px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0 8px;}
-  .gallery-main.ig-mode .instagram-media{margin:0 auto!important;min-width:280px!important;max-width:540px!important;width:100%!important;}
+  .gallery-main.ig-mode iframe{width:100%!important;max-width:540px!important;min-width:280px!important;height:760px!important;border:0!important;display:block!important;margin:0 auto!important;background:#fff;}
   .gallery-main iframe{width:100%;height:100%;border:0;}
   .gallery-thumbs{display:flex;gap:8px;margin-top:8px;overflow-x:auto;}
   .thumb{
@@ -199,11 +199,15 @@ function youtubeEmbed(url) {
   overflow:hidden;
   padding:8px 0;
 }
-.gallery-main.ig-mode .instagram-media{
-  margin:0 auto !important;
+.gallery-main.ig-mode iframe{
   width:100% !important;
   max-width:540px !important;
   min-width:280px !important;
+  height:760px !important;
+  border:0 !important;
+  display:block !important;
+  margin:0 auto !important;
+  background:#fff !important;
 }
 @media (max-width:640px){
   .gallery-main.ig-mode{
@@ -370,7 +374,7 @@ function instagramEmbedUrl(url){
   const permalink = normalizeInstagramUrl(url);
   if(!permalink) return null;
 
-  // Instagram's direct embed endpoint works with public post/reel URLs.
+  // Instagram's public embed endpoint.
   return permalink.replace(/\/?$/, '/') + 'embed/';
 }
 
@@ -715,7 +719,7 @@ function renderMainMedia(m){
 
   el.appendChild(blockquote);
 
-  loadInstagramEmbed();
+  
 }
 }
 
