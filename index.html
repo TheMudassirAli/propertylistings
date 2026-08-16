@@ -137,46 +137,6 @@
   h1.page-title{font-size:18px;margin:0 0 16px;}
 </style>
 
-<script>
-// Robust media URL helpers
-function getYouTubeId(url) {
-  if (!url) return null;
-  try {
-    const u = new URL(String(url).trim());
-    if (u.hostname.includes("youtu.be")) return u.pathname.split("/").filter(Boolean)[0] || null;
-    if (u.hostname.includes("youtube.com")) {
-      if (u.searchParams.get("v")) return u.searchParams.get("v");
-      const parts = u.pathname.split("/").filter(Boolean);
-      const i = parts.indexOf("shorts");
-      if (i >= 0 && parts[i + 1]) return parts[i + 1];
-      const e = parts.indexOf("embed");
-      if (e >= 0 && parts[e + 1]) return parts[e + 1];
-    }
-  } catch(e) {}
-  return null;
-}
-
-function normalizeInstagramUrl(url) {
-  if (!url) return null;
-  const s = String(url).trim();
-  if (!/instagram\.com/i.test(s)) return null;
-  try {
-    const u = new URL(s);
-    u.search = "";
-    u.hash = "";
-    return u.toString();
-  } catch(e) {
-    return s;
-  }
-}
-
-function youtubeEmbed(url) {
-  const id = getYouTubeId(url);
-  return id ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0` : null;
-}
-</script>
-
-
 <style id="social-media-gallery-fix">
 .gallery-main.yt-mode{
   aspect-ratio:16/9;
@@ -256,14 +216,77 @@ function showToast(msg){
   setTimeout(()=>toastEl.classList.remove('show'), 1800);
 }
 
-function fetchCSV(url){
-  return new Promise((resolve, reject)=>{
-    Papa.parse(url, { download:true, header:true, skipEmptyLines:true, complete: r => resolve(r.data), error: reject });
+async function fetchCSV(url){
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+
+  async function getText(requestUrl){
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try{
+      const response = await fetch(requestUrl, {
+        method:'GET',
+        cache:'no-store',
+        mode:'cors',
+        signal:controller.signal
+      });
+      if(!response.ok) throw new Error(`HTTP ${response.status}`);
+      const csvText = await response.text();
+      if(!csvText.trim()) throw new Error('Empty response');
+      return csvText;
+    }finally{
+      clearTimeout(timeout);
+    }
+  }
+
+  let csvText = null;
+  let directError = null;
+
+  try{
+    csvText = await getText(url);
+  }catch(e){
+    directError = e;
+    console.warn('Direct Google Sheets load failed:', e);
+  }
+
+  if(!csvText){
+    try{
+      csvText = await getText(proxyUrl);
+    }catch(e){
+      throw new Error(
+        `Could not load Google Sheet. Direct: ${directError?.message || 'failed'}; ` +
+        `Fallback: ${e.message || 'failed'}`
+      );
+    }
+  }
+
+  const parsed = Papa.parse(csvText, {
+    header:true,
+    skipEmptyLines:true,
+    transformHeader: h => (h || '').replace(/^\uFEFF/, '').trim()
   });
+
+  if(parsed.errors?.length) console.warn('CSV parse warnings:', parsed.errors);
+  return parsed.data || [];
 }
 
 function slugify(s){ return (s||'').toString().trim().toLowerCase().replace(/\s+/g,'-'); }
 function normEmail(e){ return (e||'').toString().trim().toLowerCase(); }
+function escapeHtml(value){
+  return (value ?? '').toString()
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+function normalizeListingId(value){
+  return decodeURIComponent((value || '').toString())
+    .replace(/\u00A0/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
 function waNumberOf(phone){
   let d = (phone||'').toString().replace(/\D/g,'');
   if(d.length === 10) d = '91' + d; // assume India number, add country code
@@ -484,14 +507,33 @@ function buildSlugMap(agents){
   return {emailToSlug, slugToEmail};
 }
 
-function listingIdOf(l){ return encodeURIComponent((l['Timestamp']||'').toString()); }
+function listingIdOf(l){ return encodeURIComponent(normalizeListingId(l['Timestamp'])); }
 
 async function init(){
+  app.innerHTML = '<div class="empty">Loading listings…</div>';
+
   let agents, listings;
+
   try{
-    [agents, listings] = await Promise.all([fetchCSV(AGENTS_CSV_URL), fetchCSV(LISTINGS_CSV_URL)]);
+    [agents, listings] = await Promise.all([
+      fetchCSV(AGENTS_CSV_URL),
+      fetchCSV(LISTINGS_CSV_URL)
+    ]);
   }catch(e){
-    app.innerHTML = '<div class="empty">Could not load data. Check the sheet links are published to the web as CSV.</div>';
+    console.error('Data loading error:', e);
+    app.innerHTML = `
+      <div class="empty">
+        <strong>Could not load listings.</strong>
+        <div style="margin-top:8px;font-size:12px;line-height:1.6;">
+          ${escapeHtml(e.message || 'Unknown error')}
+        </div>
+        <button onclick="location.reload()"
+          style="margin-top:14px;border:1px solid var(--line);background:var(--card);
+                 border-radius:999px;padding:9px 14px;cursor:pointer;font-weight:600;">
+          Retry
+        </button>
+      </div>
+    `;
     return;
   }
 
@@ -500,9 +542,13 @@ async function init(){
   const agentSlug = params.get('agent');
   const listingId = params.get('listing');
 
-  if(agentSlug && listingId) renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
-  else if(agentSlug) renderAgentPage(agentSlug, agents, listings, slugMap);
-  else renderDirectory(agents, listings, slugMap);
+  if(agentSlug && listingId){
+    renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
+  }else if(agentSlug){
+    renderAgentPage(agentSlug, agents, listings, slugMap);
+  }else{
+    renderDirectory(agents, listings, slugMap);
+  }
 }
 
 function renderDirectory(agents, listings, slugMap){
@@ -637,7 +683,8 @@ function renderAgentPage(slug, agents, listings, slugMap){
 function renderPropertyPage(slug, listingId, agents, listings, slugMap){
   const email = slugMap.slugToEmail[slug];
   const agent = agents.find(a => normEmail(a['Email address']) === email);
-  const listing = listings.find(l => normEmail(l['Email address']) === email && (l['Timestamp']||'').toString().trim() === listingId.trim());
+  const requestedId = normalizeListingId(listingId);
+  const listing = listings.find(l => normEmail(l['Email address']) === email && normalizeListingId(l['Timestamp']) === requestedId);
   if(!agent || !listing){ app.innerHTML = '<div class="empty">Listing not found.</div>'; return; }
 
   const photos = (listing['Photo URL']||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -719,16 +766,16 @@ function renderMainMedia(m){
 
   el.appendChild(blockquote);
 
-  // Initialize Instagram's embed.js after the blockquote is added.
+  // Initialize Instagram's embed.js after inserting the blockquote.
   loadInstagramEmbed();
 
-  // Fallback if Instagram does not render the embed.
+  // Fallback link if Instagram does not render the embed.
   setTimeout(() => {
     const host = document.getElementById('gallery-main');
-    if (!host || !host.contains(blockquote)) return;
+    if(!host || !host.contains(blockquote)) return;
 
     const rendered = host.querySelector('iframe, .instagram-media-rendered');
-    if (!rendered && !host.querySelector('.instagram-fallback')) {
+    if(!rendered && !host.querySelector('.instagram-fallback')){
       const fallback = document.createElement('a');
       fallback.className = 'instagram-fallback';
       fallback.href = m.permalink;
@@ -756,8 +803,20 @@ window.switchMedia = function(index){
 
 window.shareListing = function(btn){
   const text = decodeURIComponent(btn.getAttribute('data-text'));
-  if(navigator.share){ navigator.share({text}); }
-  else { navigator.clipboard.writeText(text); showToast('Copied — paste it into WhatsApp'); }
+
+  if(navigator.share){
+    navigator.share({text}).catch(() => {
+      if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(text);
+        showToast('Copied — paste it into WhatsApp');
+      }
+    });
+  }else if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(text);
+    showToast('Copied — paste it into WhatsApp');
+  }else{
+    showToast('Copy the link manually');
+  }
 };
 
 init();
