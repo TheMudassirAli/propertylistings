@@ -20,7 +20,7 @@
     line-height:1.5;
   }
   .wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
-
+ 
   .agent-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
   .avatar{
     width:56px;height:56px;border-radius:50%;flex-shrink:0;
@@ -36,13 +36,13 @@
     padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600;
     cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;
   }
-
+ 
   .filters{display:flex; gap:8px; overflow-x:auto; margin-bottom:18px; padding-bottom:4px;}
   .filters select{
     border:1px solid var(--line); background:var(--card); border-radius:999px;
     padding:8px 12px; font-size:13px; color:var(--ink); flex-shrink:0;
   }
-
+ 
   .listing{
     display:flex; gap:12px; background:var(--card); border:1px solid var(--line);
     border-radius:var(--radius); padding:10px; margin-bottom:10px;
@@ -72,7 +72,7 @@
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
   .listing-specs{font-size:11px;color:var(--ink-faint);margin:0 0 2px;}
-
+ 
   .directory-card{
     display:flex;align-items:center;gap:12px;background:var(--card);
     border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;
@@ -80,7 +80,7 @@
   }
   .directory-card .agent-name{font-size:15px;}
   .directory-card .agent-meta{font-size:12px;}
-
+ 
   .back-link{
     display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--ink-soft);
     text-decoration:none;margin-bottom:14px;
@@ -90,8 +90,7 @@
     background-size:cover;background-position:center;position:relative;overflow:hidden;
   }
   .gallery-main.yt-mode{aspect-ratio:16/9;background:#000;}
-  .gallery-main.ig-mode{aspect-ratio:auto;min-height:500px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0 8px;}
-  .gallery-main.ig-mode iframe{width:100%!important;max-width:540px!important;min-width:280px!important;height:760px!important;border:0!important;display:block!important;margin:0 auto!important;background:#fff;}
+  .gallery-main.ig-mode{aspect-ratio:auto;min-height:400px;background:#fff;display:flex;align-items:center;justify-content:center;}
   .gallery-main iframe{width:100%;height:100%;border:0;}
   .gallery-thumbs{display:flex;gap:8px;margin-top:8px;overflow-x:auto;}
   .thumb{
@@ -126,7 +125,7 @@
     width:100%;margin-top:12px;padding:12px;border-radius:999px;border:1px solid var(--line);
     background:var(--card);font-size:13px;font-weight:600;cursor:pointer;
   }
-
+ 
   .empty{color:var(--ink-faint);font-size:13px;text-align:center;padding:40px 0;}
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
@@ -136,52 +135,13 @@
   .toast.show{opacity:1;}
   h1.page-title{font-size:18px;margin:0 0 16px;}
 </style>
-
-<style id="social-media-gallery-fix">
-.gallery-main.yt-mode{
-  aspect-ratio:16/9;
-  background:#000;
-}
-.gallery-main.yt-mode iframe{
-  width:100%;
-  height:100%;
-  display:block;
-  border:0;
-}
-.gallery-main.ig-mode{
-  aspect-ratio:4/5;
-  min-height:500px;
-  height:auto;
-  background:#fff;
-  display:flex;
-  align-items:flex-start;
-  justify-content:center;
-  overflow:hidden;
-}
-.gallery-main.ig-mode iframe{
-  width:100%;
-  height:100%;
-  min-height:500px;
-  display:block;
-  border:0;
-}
-@media (max-width:640px){
-  .gallery-main.ig-mode{
-    min-height:460px;
-  }
-  .gallery-main.ig-mode iframe{
-    min-height:460px;
-  }
-}
-</style>
-
 </head>
 <body>
 <div class="wrap" id="app">
   <div class="empty">Loading listings…</div>
 </div>
 <div class="toast" id="toast"></div>
-
+ 
 <script>
 /* ============================================================
    EDIT THESE TWO LINES ONLY — paste your published Google Sheet
@@ -190,7 +150,7 @@
 const AGENTS_CSV_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCXA3NU7egj4jXKZMNZOBtsQ9zSB3e6FaqyrFsp7Sjh3yyqexI8NxNHUsSCDdKCWKWKGPms4oWwnil/pub?output=csv";
 const LISTINGS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVB8CeQwJ75S5e0K5fyHO-ubc3cf28xib_xc3xFSp274NNRfJPx6ZFamqmqOADAR2Fb8N2t7ie0XJP/pub?output=csv";
 /* ============================================================ */
-
+ 
 const SALE_BUCKETS = [
   {label:"0-50L", min:0, max:5000000},
   {label:"50L-1Cr", min:5000000, max:10000000},
@@ -205,108 +165,24 @@ const RENT_BUCKETS = [
 ];
 const RESIDENTIAL_TYPES = ["Flat","Villa","Independent House"];
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
+ 
 const app = document.getElementById('app');
 const toastEl = document.getElementById('toast');
-
+ 
 function showToast(msg){
   toastEl.textContent = msg;
   toastEl.classList.add('show');
   setTimeout(()=>toastEl.classList.remove('show'), 1800);
 }
-
-async function fetchCSV(url){
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
-  try{
-    const response = await fetch(url, {
-      method:'GET',
-      cache:'no-store',
-      mode:'cors',
-      signal:controller.signal
-    });
-
-    if(!response.ok){
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const csvText = await response.text();
-    if(!csvText.trim()){
-      throw new Error('Empty CSV response');
-    }
-
-    const parsed = Papa.parse(csvText, {
-      header:true,
-      skipEmptyLines:true,
-      transformHeader: h => (h || '').replace(/^\uFEFF/, '').trim()
-    });
-
-    if(parsed.errors?.length){
-      console.warn('CSV parse warnings:', parsed.errors);
-    }
-
-    return parsed.data || [];
-  }catch(e){
-    if(e.name === 'AbortError'){
-      throw new Error('Google Sheet request timed out after 15 seconds.');
-    }
-    throw new Error(`Google Sheet request failed: ${e.message || 'Unknown error'}`);
-  }finally{
-    clearTimeout(timeout);
-  }
+ 
+function fetchCSV(url){
+  return new Promise((resolve, reject)=>{
+    Papa.parse(url, { download:true, header:true, skipEmptyLines:true, complete: r => resolve(r.data), error: reject });
+  });
 }
-
-
+ 
 function slugify(s){ return (s||'').toString().trim().toLowerCase().replace(/\s+/g,'-'); }
 function normEmail(e){ return (e||'').toString().trim().toLowerCase(); }
-function escapeHtml(value){
-  return (value ?? '').toString()
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
-}
-
-function safeUrl(value){
-  const raw = (value ?? '').toString().trim();
-  if(!raw) return '';
-  try{
-    const u = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
-    if(!['http:','https:'].includes(u.protocol)) return '';
-    return u.href;
-  }catch(e){
-    return '';
-  }
-}
-
-function normalizeListingId(value){
-  return decodeURIComponent((value || '').toString())
-    .replace(/\u00A0/g,' ')
-    .replace(/\s+/g,' ')
-    .trim();
-}
-
-function propertyIdOf(listing){
-  const explicit =
-    listing['Property ID'] ||
-    listing['Listing ID'] ||
-    listing['ID'] ||
-    listing['PropertyID'];
-
-  if(explicit && String(explicit).trim()){
-    return normalizeListingId(explicit);
-  }
-
-  // Backward-compatible fallback for existing Google Sheet rows.
-  return normalizeListingId(listing['Timestamp']);
-}
-
-function listingUrlFor(slug, listing){
-  return `?agent=${encodeURIComponent(slug)}&listing=${encodeURIComponent(propertyIdOf(listing))}`;
-}
-
 function waNumberOf(phone){
   let d = (phone||'').toString().replace(/\D/g,'');
   if(d.length === 10) d = '91' + d; // assume India number, add country code
@@ -324,7 +200,7 @@ function formatDate(ts){
 }
 function isRent(l){ return (l['Listing Purpose']||'').toLowerCase().includes('rent'); }
 function isPlot(l){ return (l['Property Type']||'').toLowerCase() === 'plot'; }
-
+ 
 function formatPrice(l){
   const num = parseFloat(l['Price']);
   if(isNaN(num)) return l['Price'] || '';
@@ -333,131 +209,43 @@ function formatPrice(l){
   if(num >= 100000) return '₹' + Math.round(num/100000) + 'L';
   return '₹' + num.toLocaleString('en-IN');
 }
-
+ 
 function youtubeVideoId(url){
   if(!url) return null;
-
-  let raw = String(url).trim();
-
-  // Accept links pasted without https://
-  if(!/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
-
-  try {
-    const u = new URL(raw);
-    const host = u.hostname.toLowerCase();
-
-    // youtu.be/VIDEO_ID
-    if(host === 'youtu.be' || host === 'www.youtu.be'){
-      return u.pathname.split('/').filter(Boolean)[0] || null;
-    }
-
-    if(host === 'youtube.com' || host === 'www.youtube.com' || host.endsWith('.youtube.com')){
-      // youtube.com/watch?v=VIDEO_ID
-      const v = u.searchParams.get('v');
-      if(v) return v;
-
-      const parts = u.pathname.split('/').filter(Boolean);
-
-      // youtube.com/shorts/VIDEO_ID
-      const shorts = parts.indexOf('shorts');
-      if(shorts >= 0 && parts[shorts + 1]) return parts[shorts + 1];
-
-      // youtube.com/embed/VIDEO_ID
-      const embed = parts.indexOf('embed');
-      if(embed >= 0 && parts[embed + 1]) return parts[embed + 1];
-
-      // youtube.com/live/VIDEO_ID
-      const live = parts.indexOf('live');
-      if(live >= 0 && parts[live + 1]) return parts[live + 1];
-    }
-  } catch(e) {}
-
-  // Last-resort extraction for pasted text containing a YouTube URL
-  const match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{6,})/i);
-  return match ? match[1].split(/[?&#/]/)[0] : null;
+  const match = url.toString().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
 }
-
 function youtubeEmbedUrl(url){
   const id = youtubeVideoId(url);
-  return id
-    ? 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?rel=0&playsinline=1'
-    : null;
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
 }
-
 function youtubeThumbUrl(url){
   const id = youtubeVideoId(url);
-  return id
-    ? 'https://img.youtube.com/vi/' + encodeURIComponent(id) + '/hqdefault.jpg'
-    : null;
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
-
-function normalizeInstagramUrl(url){
-  if(!url) return null;
-
-  let raw = String(url).trim();
-  if(!/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
-
-  try{
-    const u = new URL(raw);
-    const host = u.hostname.toLowerCase();
-
-    if(host !== 'instagram.com' && host !== 'www.instagram.com') return null;
-
-    const match = u.pathname.match(/^\/(p|reel|tv)\/([A-Za-z0-9_-]+)/i);
-    if(!match) return null;
-
-    const kind = match[1].toLowerCase();
-    const id = match[2];
-
-    return {
-      permalink: `https://www.instagram.com/${kind}/${id}/`,
-      embedUrl: `https://www.instagram.com/${kind}/${id}/embed/`
-    };
-  }catch(e){
-    return null;
-  }
-}
-
-
+ 
 // Builds one ordered list mixing photos and videos for the top gallery
 function buildMediaList(listing, photos){
   const media = photos.map(src => ({type:'photo', src}));
-
-  const yt = (listing['YouTube Video Link'] || '').toString().trim();
-  const ytId = youtubeVideoId(yt);
-
-  if(ytId){
-    media.push({
-      type:'youtube',
-      embedUrl: youtubeEmbedUrl(yt),
-      thumb: youtubeThumbUrl(yt)
-    });
-  } else if(yt){
-    media.push({
-      type:'external',
-      url: yt,
-      label:'Open YouTube video'
-    });
-  }
-
-  const ig = normalizeInstagramUrl(listing['Instagram Post Link']);
-  if(ig){
-    media.push({
-      type:'instagram',
-      permalink: ig.permalink,
-      embedUrl: ig.embedUrl
-    });
-  }
-
+  const yt = listing['Youtube Video link'];
+  if(youtubeVideoId(yt)) media.push({type:'youtube', embedUrl: youtubeEmbedUrl(yt), thumb: youtubeThumbUrl(yt)});
+  if(listing['Instagram Video link']) media.push({type:'instagram', permalink: listing['Instagram Video link']});
   return media;
 }
-
-
+ 
+function loadInstagramEmbed(){
+  if(window.instgrm){ window.instgrm.Embeds.process(); return; }
+  const script = document.createElement('script');
+  script.src = 'https://www.instagram.com/embed.js';
+  script.async = true;
+  document.body.appendChild(script);
+}
+ 
 function locationLine(l){
   const parts = [l['Area'], l['Zone']].filter(Boolean);
   return parts.join(', ');
 }
-
+ 
 function specsLine(l){
   if(isPlot(l)){
     return l['Plot Area (sq ft)'] ? l['Plot Area (sq ft)'] + ' sq ft plot' : '';
@@ -468,7 +256,7 @@ function specsLine(l){
   if(l['Furnishing']) bits.push(l['Furnishing']);
   return bits.join(' · ');
 }
-
+ 
 function buildSlugMap(agents){
   const used = new Set();
   const emailToSlug = {}, slugToEmail = {};
@@ -484,51 +272,28 @@ function buildSlugMap(agents){
   });
   return {emailToSlug, slugToEmail};
 }
-
-function listingIdOf(l){ return encodeURIComponent(propertyIdOf(l)); }
-
+ 
+function listingIdOf(l){ return encodeURIComponent((l['Timestamp']||'').toString()); }
+ 
 async function init(){
-  app.innerHTML = '<div class="empty">Loading listings…</div>';
-
   let agents, listings;
-
   try{
-    [agents, listings] = await Promise.all([
-      fetchCSV(AGENTS_CSV_URL),
-      fetchCSV(LISTINGS_CSV_URL)
-    ]);
+    [agents, listings] = await Promise.all([fetchCSV(AGENTS_CSV_URL), fetchCSV(LISTINGS_CSV_URL)]);
   }catch(e){
-    console.error('Data loading error:', e);
-    app.innerHTML = `
-      <div class="empty">
-        <strong>Could not load listings.</strong>
-        <div style="margin-top:8px;font-size:12px;line-height:1.6;">
-          ${escapeHtml(e.message || 'Unknown error')}
-        </div>
-        <button onclick="location.reload()"
-          style="margin-top:14px;border:1px solid var(--line);background:var(--card);
-                 border-radius:999px;padding:9px 14px;cursor:pointer;font-weight:600;">
-          Retry
-        </button>
-      </div>
-    `;
+    app.innerHTML = '<div class="empty">Could not load data. Check the sheet links are published to the web as CSV.</div>';
     return;
   }
-
+ 
   const slugMap = buildSlugMap(agents);
   const params = new URLSearchParams(window.location.search);
   const agentSlug = params.get('agent');
   const listingId = params.get('listing');
-
-  if(agentSlug && listingId){
-    renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
-  }else if(agentSlug){
-    renderAgentPage(agentSlug, agents, listings, slugMap);
-  }else{
-    renderDirectory(agents, listings, slugMap);
-  }
+ 
+  if(agentSlug && listingId) renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
+  else if(agentSlug) renderAgentPage(agentSlug, agents, listings, slugMap);
+  else renderDirectory(agents, listings, slugMap);
 }
-
+ 
 function renderDirectory(agents, listings, slugMap){
   let html = '<h1 class="page-title">Agents — Bangalore</h1>';
   if(agents.length === 0) html += '<div class="empty">No agents yet.</div>';
@@ -548,20 +313,20 @@ function renderDirectory(agents, listings, slugMap){
   });
   app.innerHTML = html;
 }
-
+ 
 function renderAgentPage(slug, agents, listings, slugMap){
   const email = slugMap.slugToEmail[slug];
   const agent = agents.find(a => normEmail(a['Email address']) === email);
   if(!agent){ app.innerHTML = '<div class="empty">Agent not found.</div>'; return; }
   const myListings = listings.filter(l => normEmail(l['Email address']) === email);
-
+ 
   const zones = [...new Set(myListings.map(l => l['Zone']).filter(Boolean))];
   const areas = [...new Set(myListings.map(l => l['Area']).filter(Boolean))];
   const types = [...new Set(myListings.map(l => l['Property Type']).filter(Boolean))];
-
+ 
   const waNumber = waNumberOf(agent['Phone Number']);
   const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi ' + (agent['Full Name']||'') + ', I saw your listings and wanted to connect.')}` : '#';
-
+ 
   app.innerHTML = `
     <div class="agent-header">
       <div class="avatar">${agent['Photo URL'] ? `<img src="${agent['Photo URL']}">` : (agent['Full Name']||'?').charAt(0)}</div>
@@ -571,7 +336,7 @@ function renderAgentPage(slug, agents, listings, slugMap){
       </div>
       <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
     </div>
-
+ 
     <div class="filters">
       <select id="f-purpose">
         <option value="For Sale">For Sale</option>
@@ -587,10 +352,10 @@ function renderAgentPage(slug, agents, listings, slugMap){
         <option value="price-desc">Price: high to low</option>
       </select>
     </div>
-
+ 
     <div id="listing-container"></div>
   `;
-
+ 
   const priceSelect = document.getElementById('f-price');
   const populatePriceOptions = ()=>{
     const purpose = document.getElementById('f-purpose').value;
@@ -598,7 +363,7 @@ function renderAgentPage(slug, agents, listings, slugMap){
     priceSelect.innerHTML = '<option value="">Any price</option>' + buckets.map(b=>`<option value="${b.label}">${b.label}</option>`).join('');
   };
   populatePriceOptions();
-
+ 
   const renderListings = ()=>{
     const purpose = document.getElementById('f-purpose').value;
     const type = document.getElementById('f-type').value;
@@ -606,7 +371,7 @@ function renderAgentPage(slug, agents, listings, slugMap){
     const area = document.getElementById('f-area').value;
     const priceLabel = document.getElementById('f-price').value;
     const sort = document.getElementById('f-sort').value;
-
+ 
     let data = myListings.filter(l => purpose === 'For Rent' ? isRent(l) : !isRent(l));
     if(type) data = data.filter(l => l['Property Type'] === type);
     if(zone) data = data.filter(l => l['Zone'] === zone);
@@ -616,14 +381,14 @@ function renderAgentPage(slug, agents, listings, slugMap){
       const b = buckets.find(x => x.label === priceLabel);
       if(b) data = data.filter(l => { const p = parseFloat(l['Price']); return !isNaN(p) && p >= b.min && p < b.max; });
     }
-
+ 
     if(sort === 'price-asc') data.sort((a,b)=> parseFloat(a['Price'])-parseFloat(b['Price']));
     if(sort === 'price-desc') data.sort((a,b)=> parseFloat(b['Price'])-parseFloat(a['Price']));
     if(sort === 'new') data.reverse();
-
+ 
     const container = document.getElementById('listing-container');
     if(data.length === 0){ container.innerHTML = '<div class="empty">No listings match these filters.</div>'; return; }
-
+ 
     container.innerHTML = data.map(l => {
       const photo = (l['Photo URL']||'').split(',')[0].trim();
       const detailUrl = `${window.location.href.split('?')[0]}?agent=${slug}&listing=${listingIdOf(l)}`;
@@ -650,35 +415,31 @@ function renderAgentPage(slug, agents, listings, slugMap){
       </a>`;
     }).join('');
   };
-
+ 
   document.getElementById('f-purpose').addEventListener('change', ()=>{ populatePriceOptions(); renderListings(); });
   ['f-type','f-zone','f-area','f-price','f-sort'].forEach(id=>{
     document.getElementById(id).addEventListener('change', renderListings);
   });
   renderListings();
 }
-
+ 
 function renderPropertyPage(slug, listingId, agents, listings, slugMap){
   const email = slugMap.slugToEmail[slug];
   const agent = agents.find(a => normEmail(a['Email address']) === email);
-  const requestedId = normalizeListingId(listingId);
-  const listing = listings.find(l =>
-    normEmail(l['Email address']) === email &&
-    propertyIdOf(l) === requestedId
-  );
+  const listing = listings.find(l => normEmail(l['Email address']) === email && (l['Timestamp']||'').toString().trim() === listingId.trim());
   if(!agent || !listing){ app.innerHTML = '<div class="empty">Listing not found.</div>'; return; }
-
+ 
   const photos = (listing['Photo URL']||'').split(',').map(s=>s.trim()).filter(Boolean);
   const media = buildMediaList(listing, photos);
   const waNumber = waNumberOf(agent['Phone Number']);
   const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi, I\'m interested in the ' + (listing['Property Type']||'property') + ' in ' + locationLine(listing) + '.')}` : '#';
   const pageUrl = window.location.href.split('?')[0] + `?agent=${slug}&listing=${listingId}`;
-
+ 
   window.__media = media; // used by switchMedia
-
+ 
   app.innerHTML = `
     <a class="back-link" href="?agent=${slug}">← Back to listings</a>
-
+ 
     <div class="gallery-main" id="gallery-main">
       <span class="tag-badge" style="top:10px;left:10px;">${listing['Listing Purpose']||''}</span>
     </div>
@@ -687,7 +448,7 @@ function renderPropertyPage(slug, listingId, agents, listings, slugMap){
       if(m.type==='youtube') return `<div class="thumb ${i===0?'active':''}" onclick="switchMedia(${i})" style="background-image:url('${m.thumb}')"><span class="play-badge">▶</span></div>`;
       return `<div class="thumb instagram-thumb ${i===0?'active':''}" onclick="switchMedia(${i})"><span class="play-badge">▶</span></div>`;
     }).join('')}</div>` : ''}
-
+ 
     <div class="detail-top">
       <p class="detail-heading">${listing['Title']||listing['Property Type']||''}</p>
       <p class="listing-type-tag">${listing['Property Type']||''}</p>
@@ -704,7 +465,7 @@ function renderPropertyPage(slug, listingId, agents, listings, slugMap){
       }
     </div>
     <p class="detail-desc">${listing['Description']||''}</p>
-
+ 
     <div class="contact-card">
       <div class="avatar">${agent['Photo URL'] ? `<img src="${agent['Photo URL']}">` : (agent['Full Name']||'?').charAt(0)}</div>
       <div style="flex:1;">
@@ -713,112 +474,47 @@ function renderPropertyPage(slug, listingId, agents, listings, slugMap){
       </div>
       <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
     </div>
-
+ 
     <button class="detail-share" onclick="shareListing(this)" data-text="${encodeURIComponent((listing['Property Type']||'') + ' in ' + locationLine(listing) + ' — ' + formatPrice(listing) + '\\n' + pageUrl)}">Share this listing</button>
   `;
-
+ 
   if(media.length) renderMainMedia(media[0]);
 }
-
+ 
 function renderMainMedia(m){
   const el = document.getElementById('gallery-main');
-  if(!el) return;
-
   const badge = el.querySelector('.tag-badge');
-
   el.classList.remove('yt-mode','ig-mode');
   el.style.backgroundImage = '';
   el.innerHTML = '';
-
   if(badge) el.appendChild(badge);
-
+ 
   if(m.type === 'photo'){
-    const safeSrc = safeUrl(m.src);
-    if(safeSrc){
-      el.style.backgroundImage = `url('${safeSrc.replace(/'/g, '%27')}')`;
-    }
-
+    el.style.backgroundImage = `url('${m.src}')`;
   } else if(m.type === 'youtube'){
     el.classList.add('yt-mode');
-
-    const safeEmbed = safeUrl(m.embedUrl);
-    if(safeEmbed){
-      const iframe = document.createElement('iframe');
-      iframe.src = safeEmbed;
-      iframe.title = 'YouTube property video';
-      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
-      iframe.allowFullscreen = true;
-      iframe.loading = 'eager';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      el.appendChild(iframe);
-    }
-
+    el.insertAdjacentHTML('beforeend', `<iframe src="${m.embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`);
   } else if(m.type === 'instagram'){
     el.classList.add('ig-mode');
-
-    const safeEmbed = safeUrl(m.embedUrl);
-    const safePermalink = safeUrl(m.permalink);
-
-    if(safeEmbed){
-      const iframe = document.createElement('iframe');
-      iframe.src = safeEmbed;
-      iframe.title = 'Instagram property video';
-      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
-      iframe.allowFullscreen = true;
-      iframe.loading = 'eager';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-
-      iframe.onerror = () => {
-        iframe.remove();
-        if(safePermalink){
-          const fallback = document.createElement('a');
-          fallback.href = safePermalink;
-          fallback.target = '_blank';
-          fallback.rel = 'noopener noreferrer';
-          fallback.textContent = 'Open Instagram video →';
-          fallback.style.cssText =
-            'display:flex;align-items:center;justify-content:center;' +
-            'min-height:160px;width:100%;font-weight:600;' +
-            'color:#1f6f5c;text-decoration:none;';
-          el.appendChild(fallback);
-        }
-      };
-
-      el.appendChild(iframe);
-    }
+    el.insertAdjacentHTML('beforeend', `<blockquote class="instagram-media" data-instgrm-permalink="${m.permalink}" data-instgrm-version="14" style="margin:0;width:100%;"></blockquote>`);
+    loadInstagramEmbed();
   }
 }
-
-
+ 
 window.switchMedia = function(index){
   const m = window.__media[index];
   if(!m) return;
   renderMainMedia(m);
   document.querySelectorAll('.gallery-thumbs .thumb').forEach((el,i)=>el.classList.toggle('active', i===index));
 };
-
+ 
 window.shareListing = function(btn){
   const text = decodeURIComponent(btn.getAttribute('data-text'));
-
-  if(navigator.share){
-    navigator.share({text}).catch(() => {
-      if(navigator.clipboard?.writeText){
-        navigator.clipboard.writeText(text);
-        showToast('Copied — paste it into WhatsApp');
-      }
-    });
-  }else if(navigator.clipboard?.writeText){
-    navigator.clipboard.writeText(text);
-    showToast('Copied — paste it into WhatsApp');
-  }else{
-    showToast('Copy the link manually');
-  }
+  if(navigator.share){ navigator.share({text}); }
+  else { navigator.clipboard.writeText(text); showToast('Copied — paste it into WhatsApp'); }
 };
-
+ 
 init();
 </script>
-
-
-
 </body>
 </html>
