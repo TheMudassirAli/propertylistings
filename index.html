@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Property Listings — Bangalore</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --ink:#1c1c1a; --ink-soft:#6b6a64; --ink-faint:#9a9890;
+    --paper:#faf9f6; --card:#ffffff; --line:#e7e5df;
+    --accent:#1f6f5c; --accent-soft:#e4f0ec;
+    --warn:#9a6a1c; --warn-soft:#faf0dd;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
+
+  .agent-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .avatar{
+    width:56px;height:56px;border-radius:50%;flex-shrink:0;
+    background:var(--accent-soft); color:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600; font-size:18px; overflow:hidden;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .agent-name{font-size:17px;font-weight:600;margin:0;}
+  .agent-meta{font-size:13px;color:var(--ink-soft);margin:3px 0 0;}
+  .header-actions{margin-left:auto;display:flex;gap:8px;flex-shrink:0;}
+  .reach-btn{
+    background:var(--accent); color:#fff; border:none;
+    padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600;
+    cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;
+  }
+  .call-btn{
+    background:var(--card); color:var(--accent); border:1px solid var(--accent);
+    padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600;
+    cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;
+  }
+
+  .control-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;}
+  .filter-btn{
+    position:relative;border:1px solid var(--line);background:var(--card);
+    border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink);
+  }
+  .filter-badge{
+    background:var(--accent);color:#fff;font-size:10px;font-weight:700;
+    border-radius:999px;padding:1px 6px;margin-left:6px;
+  }
+  .control-bar select{
+    border:1px solid var(--line);background:var(--card);border-radius:999px;
+    padding:8px 12px;font-size:13px;color:var(--ink);
+  }
+  .share-filtered-btn{
+    margin-left:auto;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);
+    border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .result-count{font-size:13px;color:var(--ink-soft);margin:0 0 12px;}
+
+  .sheet-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.4);opacity:0;pointer-events:none;
+    transition:opacity 0.2s;z-index:40;
+  }
+  .sheet-overlay.open{opacity:1;pointer-events:auto;}
+  .filter-sheet{
+    position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-radius:20px 20px 0 0;
+    padding:16px;transform:translateY(100%);transition:transform 0.25s ease;z-index:41;
+    max-width:720px;margin:0 auto;max-height:80vh;overflow-y:auto;
+  }
+  .filter-sheet.open{transform:translateY(0);}
+  .sheet-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .sheet-title{font-size:16px;font-weight:600;margin:0;}
+  .sheet-close{border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink-soft);}
+  .sheet-body{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+  .sheet-body label{font-size:12px;color:var(--ink-soft);margin-bottom:4px;display:block;}
+  .sheet-body select{
+    width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;
+    padding:10px 12px;font-size:14px;color:var(--ink);
+  }
+  .sheet-footer{display:flex;gap:10px;}
+  .sheet-clear{
+    flex:1;background:var(--card);border:1px solid var(--line);color:var(--ink);
+    border-radius:999px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .sheet-apply{
+    flex:2;background:var(--accent);color:#fff;border:none;border-radius:999px;
+    padding:12px;font-size:14px;font-weight:600;cursor:pointer;
+  }
+
+  .listing{
+    display:flex; gap:12px; background:var(--card); border:1px solid var(--line);
+    border-radius:var(--radius); padding:10px; margin-bottom:10px;
+    text-decoration:none; color:inherit;
+  }
+  .listing-img{
+    width:100px;height:100px;flex-shrink:0;border-radius:10px;background:#eee;
+    background-size:cover;background-position:center;position:relative;overflow:hidden;
+  }
+  .tag-badge{
+    position:absolute;top:6px;left:6px;font-size:10px;font-weight:700;
+    padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);
+  }
+  .listing-body{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .listing-top{display:flex;justify-content:space-between;gap:8px;}
+  .listing-title{font-size:14px;font-weight:600;margin:0;}
+  .listing-type-tag{font-size:11px;color:var(--ink-soft);margin:1px 0 0;text-transform:uppercase;letter-spacing:0.02em;}
+  .listing-loc{font-size:12px;color:var(--ink-soft);margin:2px 0 0;}
+  .listing-date{font-size:10px;color:var(--ink-faint);margin:4px 0 0;}
+  .share-btn{
+    border:1px solid var(--line);background:var(--card);width:28px;height:28px;
+    border-radius:50%;flex-shrink:0;cursor:pointer;font-size:13px;
+  }
+  .listing-price{font-size:14px;font-weight:700;margin:5px 0 3px;}
+  .listing-desc{
+    font-size:12px;color:var(--ink-soft);margin:0;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .listing-specs{font-size:11px;color:var(--ink-faint);margin:0 0 2px;}
+
+  .directory-card{
+    display:flex;align-items:center;gap:12px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;
+    text-decoration:none;color:inherit;
+  }
+  .directory-card .agent-name{font-size:15px;}
+  .directory-card .agent-meta{font-size:12px;}
+
+  .back-link{
+    display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--ink-soft);
+    text-decoration:none;margin-bottom:14px;
+  }
+  .gallery-main{
+    width:100%;aspect-ratio:4/3;border-radius:var(--radius);background:#eee;
+    background-size:cover;background-position:center;position:relative;overflow:hidden;
+  }
+  .gallery-main.yt-mode{aspect-ratio:9/16;max-width:340px;margin:0 auto;background:#000;}
+  .gallery-main.ig-mode{aspect-ratio:auto;overflow:visible;background:transparent;min-height:500px;display:block;}
+  .gallery-main iframe{width:100%;height:100%;border:0;}
+  .gallery-thumbs{display:flex;gap:8px;margin-top:8px;overflow-x:auto;}
+  .thumb{
+    width:64px;height:64px;flex-shrink:0;border-radius:8px;cursor:pointer;
+    border:2px solid transparent;background-size:cover;background-position:center;
+    background-color:#eee;position:relative;
+  }
+  .thumb.active{border-color:var(--accent);}
+  .play-badge{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:10px;
+  }
+  .instagram-thumb{background-image:linear-gradient(45deg,#f58529,#dd2a7b,#8134af,#515bd4);}
+  .detail-top{margin-top:16px;}
+  .detail-heading{font-size:19px;font-weight:600;margin:0;}
+  .detail-loc{font-size:13px;color:var(--ink-soft);margin:4px 0 0;}
+  .detail-price{font-size:22px;font-weight:700;margin:10px 0 4px;}
+  .detail-tags{display:flex;gap:6px;margin:8px 0 16px;flex-wrap:wrap;}
+  .tag{
+    font-size:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:4px 10px;color:var(--ink-soft);
+  }
+  .detail-desc{font-size:14px;color:var(--ink);margin:0 0 20px;line-height:1.7;}
+  .contact-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;display:flex;align-items:center;gap:12px;
+  }
+  .contact-card .agent-name{font-size:14px;}
+  .contact-card .agent-meta{font-size:12px;}
+  .detail-share{
+    width:100%;margin-top:12px;padding:12px;border-radius:999px;border:1px solid var(--line);
+    background:var(--card);font-size:13px;font-weight:600;cursor:pointer;
+  }
+
+  .empty{color:var(--ink-faint);font-size:13px;text-align:center;padding:40px 0;}
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;
+    font-size:13px;opacity:0;transition:opacity 0.2s;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+  h1.page-title{font-size:18px;margin:0 0 16px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="empty">Loading listings…</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   EDIT THESE TWO LINES ONLY — paste your published Google Sheet
+   CSV links here.
+   ============================================================ */
+const AGENTS_CSV_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCXA3NU7egj4jXKZMNZOBtsQ9zSB3e6FaqyrFsp7Sjh3yyqexI8NxNHUsSCDdKCWKWKGPms4oWwnil/pub?output=csv";
+const LISTINGS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVB8CeQwJ75S5e0K5fyHO-ubc3cf28xib_xc3xFSp274NNRfJPx6ZFamqmqOADAR2Fb8N2t7ie0XJP/pub?output=csv";
+/* ============================================================ */
+
+const SALE_BUCKETS = [
+  {label:"0-50L", min:0, max:5000000},
+  {label:"50L-1Cr", min:5000000, max:10000000},
+  {label:"1Cr-2Cr", min:10000000, max:20000000},
+  {label:"2Cr+", min:20000000, max:Infinity}
+];
+const RENT_BUCKETS = [
+  {label:"0-15k", min:0, max:15000},
+  {label:"15k-30k", min:15000, max:30000},
+  {label:"30k-50k", min:30000, max:50000},
+  {label:"50k+", min:50000, max:Infinity}
+];
+const RESIDENTIAL_TYPES = ["Flat","Villa","Independent House"];
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+const app = document.getElementById('app');
+const toastEl = document.getElementById('toast');
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 1800);
+}
+
+function fetchCSV(url){
+  return new Promise((resolve, reject)=>{
+    Papa.parse(url, { download:true, header:true, skipEmptyLines:true, complete: r => resolve(r.data), error: reject });
+  });
+}
+
+function slugify(s){ return (s||'').toString().trim().toLowerCase().replace(/\s+/g,'-'); }
+function normEmail(e){ return (e||'').toString().trim().toLowerCase(); }
+function waNumberOf(phone){
+  let d = (phone||'').toString().replace(/\D/g,'');
+  if(d.length === 10) d = '91' + d; // assume India number, add country code
+  return d;
+}
+function telLinkOf(phone){
+  const d = waNumberOf(phone);
+  return d ? `tel:+${d}` : '#';
+}
+function formatDate(ts){
+  if(!ts) return '';
+  const datePart = ts.toString().trim().split(' ')[0];
+  const parts = datePart.split('/');
+  if(parts.length !== 3) return '';
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const day = parseInt(parts[0],10), month = parseInt(parts[1],10)-1, year = parts[2];
+  if(isNaN(day) || !months[month]) return '';
+  return `${String(day).padStart(2,'0')}-${months[month]}-${year}`;
+}
+function isRent(l){ return (l['Listing Purpose']||'').toLowerCase().includes('rent'); }
+function isPlot(l){ return (l['Property Type']||'').toLowerCase() === 'plot'; }
+
+function formatPrice(l){
+  const num = parseFloat(l['Price']);
+  if(isNaN(num)) return l['Price'] || '';
+  return '₹' + num.toLocaleString('en-IN') + (isRent(l) ? '/month' : '');
+}
+
+function youtubeVideoId(url){
+  if(!url) return null;
+  const match = url.toString().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+function youtubeEmbedUrl(url){
+  const id = youtubeVideoId(url);
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
+}
+function youtubeThumbUrl(url){
+  const id = youtubeVideoId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
+// Builds one ordered list mixing photos and videos for the top gallery
+function buildMediaList(listing, photos){
+  const media = photos.map(src => ({type:'photo', src}));
+  const yt = listing['Youtube Video link'];
+  if(youtubeVideoId(yt)) media.push({type:'youtube', embedUrl: youtubeEmbedUrl(yt), thumb: youtubeThumbUrl(yt)});
+  if(listing['Instagram Video link']) media.push({type:'instagram', permalink: listing['Instagram Video link']});
+  return media;
+}
+
+function loadInstagramEmbed(){
+  // Instagram's embed widget is unreliable when injected dynamically into a page
+  // (as opposed to being present at initial page load). Reloading the script fresh
+  // each time, plus a short delay before processing, is the most reliable known
+  // workaround — but it's still Instagram's own widget, so it can occasionally misbehave.
+  const old = document.getElementById('ig-embed-script');
+  if(old) old.remove();
+  delete window.instgrm;
+  const script = document.createElement('script');
+  script.id = 'ig-embed-script';
+  script.src = 'https://www.instagram.com/embed.js';
+  script.async = true;
+  script.onload = ()=>{ setTimeout(()=>{ if(window.instgrm) window.instgrm.Embeds.process(); }, 300); };
+  document.body.appendChild(script);
+}
+
+function locationLine(l){
+  const parts = [l['Area'], l['Zone']].filter(Boolean);
+  return parts.join(', ');
+}
+
+function specsLine(l){
+  if(isPlot(l)){
+    return l['Plot Area (sq ft)'] ? l['Plot Area (sq ft)'] + ' sq ft plot' : '';
+  }
+  const bits = [];
+  if(l['BHK']) bits.push(l['BHK'] + ' BHK');
+  if(l['Built-up Area (sq ft)']) bits.push(l['Built-up Area (sq ft)'] + ' sq ft');
+  if(l['Furnishing']) bits.push(l['Furnishing']);
+  return bits.join(' · ');
+}
+
+function buildSlugMap(agents){
+  const used = new Set();
+  const emailToSlug = {}, slugToEmail = {};
+  agents.forEach(a=>{
+    const email = normEmail(a['Email address']);
+    if(!email) return;
+    const base = slugify(a['Full Name']) || 'agent';
+    let slug = base, n = 2;
+    while(used.has(slug)){ slug = base + '-' + n; n++; }
+    used.add(slug);
+    emailToSlug[email] = slug;
+    slugToEmail[slug] = email;
+  });
+  return {emailToSlug, slugToEmail};
+}
+
+function listingIdOf(l){ return encodeURIComponent((l['Timestamp']||'').toString()); }
+
+async function init(){
+  let agents, listings;
+  try{
+    [agents, listings] = await Promise.all([fetchCSV(AGENTS_CSV_URL), fetchCSV(LISTINGS_CSV_URL)]);
+  }catch(e){
+    app.innerHTML = '<div class="empty">Could not load data. Check the sheet links are published to the web as CSV.</div>';
+    return;
+  }
+
+  const slugMap = buildSlugMap(agents);
+  const params = new URLSearchParams(window.location.search);
+  const agentSlug = params.get('agent');
+  const listingId = params.get('listing');
+
+  if(agentSlug && listingId) renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
+  else if(agentSlug) renderAgentPage(agentSlug, agents, listings, slugMap);
+  else renderDirectory(agents, listings, slugMap);
+}
+
+function renderDirectory(agents, listings, slugMap){
+  let html = '<h1 class="page-title">Agents — Bangalore</h1>';
+  if(agents.length === 0) html += '<div class="empty">No agents yet.</div>';
+  agents.forEach(a=>{
+    const email = normEmail(a['Email address']);
+    const slug = slugMap.emailToSlug[email];
+    if(!slug) return;
+    const count = listings.filter(l => normEmail(l['Email address']) === email).length;
+    html += `
+      <a class="directory-card" href="?agent=${encodeURIComponent(slug)}">
+        <div class="avatar">${a['Photo URL'] ? `<img src="${a['Photo URL']}">` : (a['Full Name']||'?').charAt(0)}</div>
+        <div>
+          <p class="agent-name">${a['Full Name']||'Unnamed agent'}</p>
+          <p class="agent-meta">${a['City']||''} · ${count} listing${count===1?'':'s'}</p>
+        </div>
+      </a>`;
+  });
+  app.innerHTML = html;
+}
+
+function renderAgentPage(slug, agents, listings, slugMap){
+  const email = slugMap.slugToEmail[slug];
+  const agent = agents.find(a => normEmail(a['Email address']) === email);
+  if(!agent){ app.innerHTML = '<div class="empty">Agent not found.</div>'; return; }
+  const myListings = listings.filter(l => normEmail(l['Email address']) === email);
+
+  const zones = [...new Set(myListings.map(l => l['Zone']).filter(Boolean))];
+  const areas = [...new Set(myListings.map(l => l['Area']).filter(Boolean))];
+  const types = [...new Set(myListings.map(l => l['Property Type']).filter(Boolean))];
+
+  const waNumber = waNumberOf(agent['Phone Number']);
+  const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi ' + (agent['Full Name']||'') + ', I saw your listings and wanted to connect.')}` : '#';
+
+  // Read any filters already in the URL, so a shared filtered link opens pre-filtered
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentFilters = {
+    purpose: urlParams.get('purpose') === 'For Rent' ? 'For Rent' : 'For Sale',
+    type: urlParams.get('type') || '',
+    zone: urlParams.get('zone') || '',
+    area: urlParams.get('area') || '',
+    price: urlParams.get('price') || ''
+  };
+
+  app.innerHTML = `
+    <div class="agent-header">
+      <div class="avatar">${agent['Photo URL'] ? `<img src="${agent['Photo URL']}">` : (agent['Full Name']||'?').charAt(0)}</div>
+      <div>
+        <p class="agent-name">${agent['Full Name']||''}</p>
+        <p class="agent-meta">${agent['City']||''} · ${myListings.length} listings</p>
+      </div>
+      <div class="header-actions">
+        <a class="call-btn" href="${telLinkOf(agent['Phone Number'])}">Call</a>
+        <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
+      </div>
+    </div>
+
+    <div class="control-bar">
+      <button class="filter-btn" id="filter-open-btn">Filters<span class="filter-badge" id="filter-badge" style="display:none;"></span></button>
+      <select id="f-sort">
+        <option value="new">Newest</option>
+        <option value="price-asc">Price: low to high</option>
+        <option value="price-desc">Price: high to low</option>
+      </select>
+      <button class="share-filtered-btn" id="share-filtered-btn" style="display:none;">Share</button>
+    </div>
+
+    <p class="result-count" id="result-count" style="display:none;"></p>
+
+    <div id="listing-container"></div>
+
+    <div class="sheet-overlay" id="sheet-overlay"></div>
+    <div class="filter-sheet" id="filter-sheet">
+      <div class="sheet-header">
+        <p class="sheet-title">Filters</p>
+        <button class="sheet-close" id="sheet-close">✕</button>
+      </div>
+      <div class="sheet-body">
+        <div><label>Purpose</label><select id="f-purpose">
+          <option value="For Sale">For Sale</option>
+          <option value="For Rent">For Rent</option>
+        </select></div>
+        <div><label>Type</label><select id="f-type"><option value="">All types</option>${types.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
+        <div><label>Zone</label><select id="f-zone"><option value="">All zones</option>${zones.map(z=>`<option value="${z}">${z}</option>`).join('')}</select></div>
+        <div><label>Area</label><select id="f-area"><option value="">All areas</option>${areas.map(a=>`<option value="${a}">${a}</option>`).join('')}</select></div>
+        <div><label>Price</label><select id="f-price"></select></div>
+      </div>
+      <div class="sheet-footer">
+        <button class="sheet-clear" id="sheet-clear">Clear</button>
+        <button class="sheet-apply" id="sheet-apply">Apply</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('f-purpose').value = currentFilters.purpose;
+  document.getElementById('f-type').value = currentFilters.type;
+  document.getElementById('f-zone').value = currentFilters.zone;
+  document.getElementById('f-area').value = currentFilters.area;
+
+  const priceSelect = document.getElementById('f-price');
+  const populatePriceOptions = ()=>{
+    const purpose = document.getElementById('f-purpose').value;
+    const buckets = purpose === 'For Rent' ? RENT_BUCKETS : SALE_BUCKETS;
+    priceSelect.innerHTML = '<option value="">Any price</option>' + buckets.map(b=>`<option value="${b.label}">${b.label}</option>`).join('');
+    priceSelect.value = currentFilters.price;
+  };
+  populatePriceOptions();
+  document.getElementById('f-purpose').addEventListener('change', populatePriceOptions);
+
+  const sheetOverlay = document.getElementById('sheet-overlay');
+  const filterSheet = document.getElementById('filter-sheet');
+  const openSheet = ()=>{ sheetOverlay.classList.add('open'); filterSheet.classList.add('open'); };
+  const closeSheet = ()=>{ sheetOverlay.classList.remove('open'); filterSheet.classList.remove('open'); };
+  document.getElementById('filter-open-btn').addEventListener('click', openSheet);
+  document.getElementById('sheet-close').addEventListener('click', closeSheet);
+  sheetOverlay.addEventListener('click', closeSheet);
+
+  const updateUrlAndBadge = ()=>{
+    const activeCount = ['type','zone','area','price'].filter(k=>currentFilters[k]).length;
+    const badge = document.getElementById('filter-badge');
+    if(activeCount > 0){ badge.style.display='inline-block'; badge.textContent = activeCount; }
+    else badge.style.display='none';
+
+    const p = new URLSearchParams();
+    p.set('agent', slug);
+    p.set('purpose', currentFilters.purpose);
+    if(currentFilters.type) p.set('type', currentFilters.type);
+    if(currentFilters.zone) p.set('zone', currentFilters.zone);
+    if(currentFilters.area) p.set('area', currentFilters.area);
+    if(currentFilters.price) p.set('price', currentFilters.price);
+    window.history.replaceState({}, '', `${window.location.pathname}?${p.toString()}`);
+  };
+
+  const renderListings = ()=>{
+    const { purpose, type, zone, area, price: priceLabel } = currentFilters;
+    const sort = document.getElementById('f-sort').value;
+
+    let data = myListings.filter(l => purpose === 'For Rent' ? isRent(l) : !isRent(l));
+    if(type) data = data.filter(l => l['Property Type'] === type);
+    if(zone) data = data.filter(l => l['Zone'] === zone);
+    if(area) data = data.filter(l => l['Area'] === area);
+    if(priceLabel){
+      const buckets = purpose === 'For Rent' ? RENT_BUCKETS : SALE_BUCKETS;
+      const b = buckets.find(x => x.label === priceLabel);
+      if(b) data = data.filter(l => { const p = parseFloat(l['Price']); return !isNaN(p) && p >= b.min && p < b.max; });
+    }
+
+    if(sort === 'price-asc') data.sort((a,b)=> parseFloat(a['Price'])-parseFloat(b['Price']));
+    if(sort === 'price-desc') data.sort((a,b)=> parseFloat(b['Price'])-parseFloat(a['Price']));
+    if(sort === 'new') data.reverse();
+
+    const anyFilterActive = ['type','zone','area','price'].some(k=>currentFilters[k]);
+    const countEl = document.getElementById('result-count');
+    const shareBtn = document.getElementById('share-filtered-btn');
+    if(anyFilterActive){
+      countEl.style.display = 'block';
+      countEl.textContent = `${data.length} listing${data.length===1?'':'s'} match your filters`;
+      shareBtn.style.display = 'inline-block';
+    } else {
+      countEl.style.display = 'none';
+      shareBtn.style.display = 'none';
+    }
+
+    const container = document.getElementById('listing-container');
+    if(data.length === 0){ container.innerHTML = '<div class="empty">No listings match these filters.</div>'; return; }
+
+    container.innerHTML = data.map(l => {
+      const photo = (l['Photo URL']||'').split(',')[0].trim();
+      const detailUrl = `${window.location.href.split('?')[0]}?agent=${slug}&listing=${listingIdOf(l)}`;
+      const shareText = `${l['Property Type']||''} in ${locationLine(l)} — ${formatPrice(l)}\n${detailUrl}`;
+      return `
+      <a class="listing" href="?agent=${slug}&listing=${listingIdOf(l)}">
+        <div class="listing-img" style="${photo ? `background-image:url('${photo}')` : ''}">
+          <span class="tag-badge">${l['Listing Purpose']||''}</span>
+        </div>
+        <div class="listing-body">
+          <div class="listing-top">
+            <div>
+              <p class="listing-title">${l['Title']||l['Property Type']||''}</p>
+              <p class="listing-type-tag">${l['Property Type']||''}</p>
+              <p class="listing-loc">${locationLine(l)}</p>
+            </div>
+            <button class="share-btn" onclick="event.preventDefault();shareListing(this)" data-text="${encodeURIComponent(shareText)}">↗</button>
+          </div>
+          <p class="listing-specs">${specsLine(l)}</p>
+          <p class="listing-price">${formatPrice(l)}</p>
+          <p class="listing-desc">${l['Description']||''}</p>
+          <p class="listing-date">Posted ${formatDate(l['Timestamp'])}</p>
+        </div>
+      </a>`;
+    }).join('');
+  };
+
+  document.getElementById('sheet-clear').addEventListener('click', ()=>{
+    document.getElementById('f-purpose').value = 'For Sale';
+    populatePriceOptions();
+    document.getElementById('f-type').value = '';
+    document.getElementById('f-zone').value = '';
+    document.getElementById('f-area').value = '';
+    document.getElementById('f-price').value = '';
+    currentFilters = {purpose:'For Sale', type:'', zone:'', area:'', price:''};
+    updateUrlAndBadge();
+    renderListings();
+    closeSheet();
+  });
+
+  document.getElementById('sheet-apply').addEventListener('click', ()=>{
+    currentFilters = {
+      purpose: document.getElementById('f-purpose').value,
+      type: document.getElementById('f-type').value,
+      zone: document.getElementById('f-zone').value,
+      area: document.getElementById('f-area').value,
+      price: document.getElementById('f-price').value
+    };
+    updateUrlAndBadge();
+    renderListings();
+    closeSheet();
+  });
+
+  document.getElementById('f-sort').addEventListener('change', renderListings);
+
+  document.getElementById('share-filtered-btn').addEventListener('click', ()=>{
+    const count = document.querySelectorAll('#listing-container .listing').length;
+    const parts = [currentFilters.type || (currentFilters.purpose === 'For Rent' ? 'rentals' : 'properties')];
+    if(currentFilters.zone) parts.push('in ' + currentFilters.zone);
+    if(currentFilters.area) parts.push('(' + currentFilters.area + ')');
+    if(currentFilters.price) parts.push('· ' + currentFilters.price);
+    const text = `${count} ${parts.join(' ')} — ${agent['Full Name']||''}'s listings\n${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  });
+
+  updateUrlAndBadge();
+  renderListings();
+}
+
+function renderPropertyPage(slug, listingId, agents, listings, slugMap){
+  const email = slugMap.slugToEmail[slug];
+  const agent = agents.find(a => normEmail(a['Email address']) === email);
+  const listing = listings.find(l => normEmail(l['Email address']) === email && (l['Timestamp']||'').toString().trim() === listingId.trim());
+  if(!agent || !listing){ app.innerHTML = '<div class="empty">Listing not found.</div>'; return; }
+
+  const photos = (listing['Photo URL']||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const media = buildMediaList(listing, photos);
+  const waNumber = waNumberOf(agent['Phone Number']);
+  const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi, I\'m interested in the ' + (listing['Property Type']||'property') + ' in ' + locationLine(listing) + '.')}` : '#';
+  const pageUrl = window.location.href.split('?')[0] + `?agent=${slug}&listing=${listingId}`;
+
+  window.__media = media; // used by switchMedia
+
+  app.innerHTML = `
+    <a class="back-link" href="?agent=${slug}">← Back to listings</a>
+
+    <div class="gallery-main" id="gallery-main">
+      <span class="tag-badge" style="top:10px;left:10px;">${listing['Listing Purpose']||''}</span>
+    </div>
+    ${media.length > 1 ? `<div class="gallery-thumbs">${media.map((m,i)=>{
+      if(m.type==='photo') return `<div class="thumb ${i===0?'active':''}" onclick="switchMedia(${i})" style="background-image:url('${m.src}')"></div>`;
+      if(m.type==='youtube') return `<div class="thumb ${i===0?'active':''}" onclick="switchMedia(${i})" style="background-image:url('${m.thumb}')"><span class="play-badge">▶</span></div>`;
+      return `<div class="thumb instagram-thumb ${i===0?'active':''}" onclick="switchMedia(${i})"><span class="play-badge">▶</span></div>`;
+    }).join('')}</div>` : ''}
+
+    <div class="detail-top">
+      <p class="detail-heading">${listing['Title']||listing['Property Type']||''}</p>
+      <p class="listing-type-tag">${listing['Property Type']||''}</p>
+      <p class="detail-loc">${locationLine(listing)}</p>
+      <p class="listing-date">Posted ${formatDate(listing['Timestamp'])}</p>
+    </div>
+    <p class="detail-price">${formatPrice(listing)}</p>
+    <div class="detail-tags">
+      ${isPlot(listing)
+        ? (listing['Plot Area (sq ft)'] ? `<span class="tag">${listing['Plot Area (sq ft)']} sq ft</span>` : '')
+        : `${listing['BHK'] ? `<span class="tag">${listing['BHK']} BHK</span>` : ''}
+           ${listing['Built-up Area (sq ft)'] ? `<span class="tag">${listing['Built-up Area (sq ft)']} sq ft</span>` : ''}
+           ${listing['Furnishing'] ? `<span class="tag">${listing['Furnishing']}</span>` : ''}`
+      }
+    </div>
+    <p class="detail-desc">${listing['Description']||''}</p>
+
+    <div class="contact-card">
+      <div class="avatar">${agent['Photo URL'] ? `<img src="${agent['Photo URL']}">` : (agent['Full Name']||'?').charAt(0)}</div>
+      <div style="flex:1;">
+        <p class="agent-name">${agent['Full Name']||''}</p>
+        <p class="agent-meta">${agent['City']||''}</p>
+      </div>
+      <div class="header-actions" style="margin-left:0;">
+        <a class="call-btn" href="${telLinkOf(agent['Phone Number'])}">Call</a>
+        <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
+      </div>
+    </div>
+
+    <button class="detail-share" onclick="shareListing(this)" data-text="${encodeURIComponent((listing['Property Type']||'') + ' in ' + locationLine(listing) + ' — ' + formatPrice(listing) + '\\n' + pageUrl)}">Share this listing</button>
+  `;
+
+  if(media.length) renderMainMedia(media[0]);
+}
+
+function renderMainMedia(m){
+  const el = document.getElementById('gallery-main');
+  const badge = el.querySelector('.tag-badge');
+  el.classList.remove('yt-mode','ig-mode');
+  el.style.backgroundImage = '';
+  el.innerHTML = '';
+  if(badge) el.appendChild(badge);
+
+  if(m.type === 'photo'){
+    el.style.backgroundImage = `url('${m.src}')`;
+  } else if(m.type === 'youtube'){
+    el.classList.add('yt-mode');
+    el.insertAdjacentHTML('beforeend', `<iframe src="${m.embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`);
+  } else if(m.type === 'instagram'){
+    el.classList.add('ig-mode');
+    el.insertAdjacentHTML('beforeend', `<blockquote class="instagram-media" data-instgrm-permalink="${m.permalink}" data-instgrm-version="14" style="margin:0;width:100%;"></blockquote>`);
+    loadInstagramEmbed();
+  }
+}
+
+window.switchMedia = function(index){
+  const m = window.__media[index];
+  if(!m) return;
+  renderMainMedia(m);
+  document.querySelectorAll('.gallery-thumbs .thumb').forEach((el,i)=>el.classList.toggle('active', i===index));
+};
+
+window.shareListing = function(btn){
+  const text = decodeURIComponent(btn.getAttribute('data-text'));
+  if(navigator.share){ navigator.share({text}); }
+  else { navigator.clipboard.writeText(text); showToast('Copied — paste it into WhatsApp'); }
+};
+
+init();
+</script>
+</body>
+</html>
