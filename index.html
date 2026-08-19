@@ -31,65 +31,16 @@
   .avatar img{width:100%;height:100%;object-fit:cover;}
   .agent-name{font-size:17px;font-weight:600;margin:0;}
   .agent-meta{font-size:13px;color:var(--ink-soft);margin:3px 0 0;}
-  .header-actions{margin-left:auto;display:flex;gap:8px;flex-shrink:0;}
   .reach-btn{
-    background:var(--accent); color:#fff; border:none;
-    padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600;
-    cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;
-  }
-  .call-btn{
-    background:var(--card); color:var(--accent); border:1px solid var(--accent);
+    margin-left:auto; background:var(--accent); color:#fff; border:none;
     padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600;
     cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block;
   }
 
-  .control-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;}
-  .filter-btn{
-    position:relative;border:1px solid var(--line);background:var(--card);
-    border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink);
-  }
-  .filter-badge{
-    background:var(--accent);color:#fff;font-size:10px;font-weight:700;
-    border-radius:999px;padding:1px 6px;margin-left:6px;
-  }
-  .control-bar select{
-    border:1px solid var(--line);background:var(--card);border-radius:999px;
-    padding:8px 12px;font-size:13px;color:var(--ink);
-  }
-  .share-filtered-btn{
-    margin-left:auto;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);
-    border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;
-  }
-  .result-count{font-size:13px;color:var(--ink-soft);margin:0 0 12px;}
-
-  .sheet-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,0.4);opacity:0;pointer-events:none;
-    transition:opacity 0.2s;z-index:40;
-  }
-  .sheet-overlay.open{opacity:1;pointer-events:auto;}
-  .filter-sheet{
-    position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-radius:20px 20px 0 0;
-    padding:16px;transform:translateY(100%);transition:transform 0.25s ease;z-index:41;
-    max-width:720px;margin:0 auto;max-height:80vh;overflow-y:auto;
-  }
-  .filter-sheet.open{transform:translateY(0);}
-  .sheet-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-  .sheet-title{font-size:16px;font-weight:600;margin:0;}
-  .sheet-close{border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink-soft);}
-  .sheet-body{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
-  .sheet-body label{font-size:12px;color:var(--ink-soft);margin-bottom:4px;display:block;}
-  .sheet-body select{
-    width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;
-    padding:10px 12px;font-size:14px;color:var(--ink);
-  }
-  .sheet-footer{display:flex;gap:10px;}
-  .sheet-clear{
-    flex:1;background:var(--card);border:1px solid var(--line);color:var(--ink);
-    border-radius:999px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;
-  }
-  .sheet-apply{
-    flex:2;background:var(--accent);color:#fff;border:none;border-radius:999px;
-    padding:12px;font-size:14px;font-weight:600;cursor:pointer;
+  .filters{display:flex; gap:8px; overflow-x:auto; margin-bottom:18px; padding-bottom:4px;}
+  .filters select{
+    border:1px solid var(--line); background:var(--card); border-radius:999px;
+    padding:8px 12px; font-size:13px; color:var(--ink); flex-shrink:0;
   }
 
   .listing{
@@ -138,8 +89,9 @@
     width:100%;aspect-ratio:4/3;border-radius:var(--radius);background:#eee;
     background-size:cover;background-position:center;position:relative;overflow:hidden;
   }
-  .gallery-main.yt-mode{aspect-ratio:9/16;max-width:340px;margin:0 auto;background:#000;}
-  .gallery-main.ig-mode{aspect-ratio:auto;overflow:visible;background:transparent;min-height:500px;display:block;}
+  .gallery-main.yt-mode{aspect-ratio:16/9;background:#000;}
+  .gallery-main.ig-mode{aspect-ratio:auto;min-height:500px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0 8px;}
+  .gallery-main.ig-mode iframe{width:100%!important;max-width:540px!important;min-width:280px!important;height:760px!important;border:0!important;display:block!important;margin:0 auto!important;background:#fff;}
   .gallery-main iframe{width:100%;height:100%;border:0;}
   .gallery-thumbs{display:flex;gap:8px;margin-top:8px;overflow-x:auto;}
   .thumb{
@@ -184,6 +136,45 @@
   .toast.show{opacity:1;}
   h1.page-title{font-size:18px;margin:0 0 16px;}
 </style>
+
+<style id="social-media-gallery-fix">
+.gallery-main.yt-mode{
+  aspect-ratio:16/9;
+  background:#000;
+}
+.gallery-main.yt-mode iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+}
+.gallery-main.ig-mode{
+  aspect-ratio:4/5;
+  min-height:500px;
+  height:auto;
+  background:#fff;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  overflow:hidden;
+}
+.gallery-main.ig-mode iframe{
+  width:100%;
+  height:100%;
+  min-height:500px;
+  display:block;
+  border:0;
+}
+@media (max-width:640px){
+  .gallery-main.ig-mode{
+    min-height:460px;
+  }
+  .gallery-main.ig-mode iframe{
+    min-height:460px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="wrap" id="app">
@@ -198,6 +189,7 @@
    ============================================================ */
 const AGENTS_CSV_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCXA3NU7egj4jXKZMNZOBtsQ9zSB3e6FaqyrFsp7Sjh3yyqexI8NxNHUsSCDdKCWKWKGPms4oWwnil/pub?output=csv";
 const LISTINGS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVB8CeQwJ75S5e0K5fyHO-ubc3cf28xib_xc3xFSp274NNRfJPx6ZFamqmqOADAR2Fb8N2t7ie0XJP/pub?output=csv";
+const SHARE_ENDPOINT = "https://script.google.com/macros/s/AKfycbxhSQxz2reHaWa_5aDzy4YWH1q2XLzqG-XK_zkzEsHTezfWg3RTOaqzcCq6L_dhUqCN/exec";
 /* ============================================================ */
 
 const SALE_BUCKETS = [
@@ -224,22 +216,117 @@ function showToast(msg){
   setTimeout(()=>toastEl.classList.remove('show'), 1800);
 }
 
-function fetchCSV(url){
-  return new Promise((resolve, reject)=>{
-    Papa.parse(url, { download:true, header:true, skipEmptyLines:true, complete: r => resolve(r.data), error: reject });
-  });
+async function fetchCSV(url){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try{
+    const response = await fetch(url, {
+      method:'GET',
+      cache:'no-store',
+      mode:'cors',
+      signal:controller.signal
+    });
+
+    if(!response.ok){
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const csvText = await response.text();
+    if(!csvText.trim()){
+      throw new Error('Empty CSV response');
+    }
+
+    const parsed = Papa.parse(csvText, {
+      header:true,
+      skipEmptyLines:true,
+      transformHeader: h => (h || '').replace(/^\uFEFF/, '').trim()
+    });
+
+    if(parsed.errors?.length){
+      console.warn('CSV parse warnings:', parsed.errors);
+    }
+
+    return parsed.data || [];
+  }catch(e){
+    if(e.name === 'AbortError'){
+      throw new Error('Google Sheet request timed out after 15 seconds.');
+    }
+    throw new Error(`Google Sheet request failed: ${e.message || 'Unknown error'}`);
+  }finally{
+    clearTimeout(timeout);
+  }
 }
+
 
 function slugify(s){ return (s||'').toString().trim().toLowerCase().replace(/\s+/g,'-'); }
 function normEmail(e){ return (e||'').toString().trim().toLowerCase(); }
+function escapeHtml(value){
+  return (value ?? '').toString()
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+function safeUrl(value){
+  const raw = (value ?? '').toString().trim();
+  if(!raw) return '';
+  try{
+    const u = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+    if(!['http:','https:'].includes(u.protocol)) return '';
+    return u.href;
+  }catch(e){
+    return '';
+  }
+}
+
+function normalizeListingId(value){
+  return decodeURIComponent((value || '').toString())
+    .replace(/\u00A0/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function propertyIdOf(listing){
+  const explicit =
+    listing['Property ID'] ||
+    listing['Listing ID'] ||
+    listing['ID'] ||
+    listing['PropertyID'];
+
+  if(explicit && String(explicit).trim()){
+    return normalizeListingId(explicit);
+  }
+
+  // Backward-compatible fallback for existing Google Sheet rows.
+  return normalizeListingId(listing['Timestamp']);
+}
+
+function listingUrlFor(slug, listing){
+  const id = propertyIdOf(listing);
+  const fallback =
+    `${window.location.origin}${window.location.pathname}` +
+    `?agent=${encodeURIComponent(slug)}` +
+    `&listing=${encodeURIComponent(id)}`;
+
+  if (
+    SHARE_ENDPOINT &&
+    !SHARE_ENDPOINT.includes('PASTE_YOUR_')
+  ) {
+    return `${SHARE_ENDPOINT}` +
+      `?agent=${encodeURIComponent(slug)}` +
+      `&listing=${encodeURIComponent(id)}`;
+  }
+
+  return fallback;
+}
+
 function waNumberOf(phone){
   let d = (phone||'').toString().replace(/\D/g,'');
   if(d.length === 10) d = '91' + d; // assume India number, add country code
   return d;
-}
-function telLinkOf(phone){
-  const d = waNumberOf(phone);
-  return d ? `tel:+${d}` : '#';
 }
 function formatDate(ts){
   if(!ts) return '';
@@ -257,47 +344,130 @@ function isPlot(l){ return (l['Property Type']||'').toLowerCase() === 'plot'; }
 function formatPrice(l){
   const num = parseFloat(l['Price']);
   if(isNaN(num)) return l['Price'] || '';
-  return '₹' + num.toLocaleString('en-IN') + (isRent(l) ? '/month' : '');
+  if(isRent(l)) return '₹' + num.toLocaleString('en-IN') + '/month';
+  if(num >= 10000000) return '₹' + (num/10000000).toFixed(2).replace(/\.?0+$/,'') + 'Cr';
+  if(num >= 100000) return '₹' + Math.round(num/100000) + 'L';
+  return '₹' + num.toLocaleString('en-IN');
 }
 
 function youtubeVideoId(url){
   if(!url) return null;
-  const match = url.toString().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-  return match ? match[1] : null;
+
+  let raw = String(url).trim();
+
+  // Accept links pasted without https://
+  if(!/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
+
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.toLowerCase();
+
+    // youtu.be/VIDEO_ID
+    if(host === 'youtu.be' || host === 'www.youtu.be'){
+      return u.pathname.split('/').filter(Boolean)[0] || null;
+    }
+
+    if(host === 'youtube.com' || host === 'www.youtube.com' || host.endsWith('.youtube.com')){
+      // youtube.com/watch?v=VIDEO_ID
+      const v = u.searchParams.get('v');
+      if(v) return v;
+
+      const parts = u.pathname.split('/').filter(Boolean);
+
+      // youtube.com/shorts/VIDEO_ID
+      const shorts = parts.indexOf('shorts');
+      if(shorts >= 0 && parts[shorts + 1]) return parts[shorts + 1];
+
+      // youtube.com/embed/VIDEO_ID
+      const embed = parts.indexOf('embed');
+      if(embed >= 0 && parts[embed + 1]) return parts[embed + 1];
+
+      // youtube.com/live/VIDEO_ID
+      const live = parts.indexOf('live');
+      if(live >= 0 && parts[live + 1]) return parts[live + 1];
+    }
+  } catch(e) {}
+
+  // Last-resort extraction for pasted text containing a YouTube URL
+  const match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{6,})/i);
+  return match ? match[1].split(/[?&#/]/)[0] : null;
 }
+
 function youtubeEmbedUrl(url){
   const id = youtubeVideoId(url);
-  return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
+  return id
+    ? 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?rel=0&playsinline=1'
+    : null;
 }
+
 function youtubeThumbUrl(url){
   const id = youtubeVideoId(url);
-  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+  return id
+    ? 'https://img.youtube.com/vi/' + encodeURIComponent(id) + '/hqdefault.jpg'
+    : null;
 }
+
+function normalizeInstagramUrl(url){
+  if(!url) return null;
+
+  let raw = String(url).trim();
+  if(!/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
+
+  try{
+    const u = new URL(raw);
+    const host = u.hostname.toLowerCase();
+
+    if(host !== 'instagram.com' && host !== 'www.instagram.com') return null;
+
+    const match = u.pathname.match(/^\/(p|reel|tv)\/([A-Za-z0-9_-]+)/i);
+    if(!match) return null;
+
+    const kind = match[1].toLowerCase();
+    const id = match[2];
+
+    return {
+      permalink: `https://www.instagram.com/${kind}/${id}/`,
+      embedUrl: `https://www.instagram.com/${kind}/${id}/embed/`
+    };
+  }catch(e){
+    return null;
+  }
+}
+
 
 // Builds one ordered list mixing photos and videos for the top gallery
 function buildMediaList(listing, photos){
   const media = photos.map(src => ({type:'photo', src}));
-  const yt = listing['Youtube Video link'];
-  if(youtubeVideoId(yt)) media.push({type:'youtube', embedUrl: youtubeEmbedUrl(yt), thumb: youtubeThumbUrl(yt)});
-  if(listing['Instagram Video link']) media.push({type:'instagram', permalink: listing['Instagram Video link']});
+
+  const yt = (listing['YouTube Video Link'] || '').toString().trim();
+  const ytId = youtubeVideoId(yt);
+
+  if(ytId){
+    media.push({
+      type:'youtube',
+      embedUrl: youtubeEmbedUrl(yt),
+      thumb: youtubeThumbUrl(yt)
+    });
+  } else if(yt){
+    media.push({
+      type:'external',
+      url: yt,
+      label:'Open YouTube video'
+    });
+  }
+
+  const ig = normalizeInstagramUrl(listing['Instagram Post Link']);
+  if(ig){
+    media.push({
+      type:'instagram',
+      permalink: ig.permalink,
+      embedUrl: ig.embedUrl
+    });
+  }
+
   return media;
 }
 
-function loadInstagramEmbed(){
-  // Instagram's embed widget is unreliable when injected dynamically into a page
-  // (as opposed to being present at initial page load). Reloading the script fresh
-  // each time, plus a short delay before processing, is the most reliable known
-  // workaround — but it's still Instagram's own widget, so it can occasionally misbehave.
-  const old = document.getElementById('ig-embed-script');
-  if(old) old.remove();
-  delete window.instgrm;
-  const script = document.createElement('script');
-  script.id = 'ig-embed-script';
-  script.src = 'https://www.instagram.com/embed.js';
-  script.async = true;
-  script.onload = ()=>{ setTimeout(()=>{ if(window.instgrm) window.instgrm.Embeds.process(); }, 300); };
-  document.body.appendChild(script);
-}
 
 function locationLine(l){
   const parts = [l['Area'], l['Zone']].filter(Boolean);
@@ -331,14 +501,33 @@ function buildSlugMap(agents){
   return {emailToSlug, slugToEmail};
 }
 
-function listingIdOf(l){ return encodeURIComponent((l['Timestamp']||'').toString()); }
+function listingIdOf(l){ return encodeURIComponent(propertyIdOf(l)); }
 
 async function init(){
+  app.innerHTML = '<div class="empty">Loading listings…</div>';
+
   let agents, listings;
+
   try{
-    [agents, listings] = await Promise.all([fetchCSV(AGENTS_CSV_URL), fetchCSV(LISTINGS_CSV_URL)]);
+    [agents, listings] = await Promise.all([
+      fetchCSV(AGENTS_CSV_URL),
+      fetchCSV(LISTINGS_CSV_URL)
+    ]);
   }catch(e){
-    app.innerHTML = '<div class="empty">Could not load data. Check the sheet links are published to the web as CSV.</div>';
+    console.error('Data loading error:', e);
+    app.innerHTML = `
+      <div class="empty">
+        <strong>Could not load listings.</strong>
+        <div style="margin-top:8px;font-size:12px;line-height:1.6;">
+          ${escapeHtml(e.message || 'Unknown error')}
+        </div>
+        <button onclick="location.reload()"
+          style="margin-top:14px;border:1px solid var(--line);background:var(--card);
+                 border-radius:999px;padding:9px 14px;cursor:pointer;font-weight:600;">
+          Retry
+        </button>
+      </div>
+    `;
     return;
   }
 
@@ -347,9 +536,13 @@ async function init(){
   const agentSlug = params.get('agent');
   const listingId = params.get('listing');
 
-  if(agentSlug && listingId) renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
-  else if(agentSlug) renderAgentPage(agentSlug, agents, listings, slugMap);
-  else renderDirectory(agents, listings, slugMap);
+  if(agentSlug && listingId){
+    renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
+  }else if(agentSlug){
+    renderAgentPage(agentSlug, agents, listings, slugMap);
+  }else{
+    renderDirectory(agents, listings, slugMap);
+  }
 }
 
 function renderDirectory(agents, listings, slugMap){
@@ -381,21 +574,9 @@ function renderAgentPage(slug, agents, listings, slugMap){
   const zones = [...new Set(myListings.map(l => l['Zone']).filter(Boolean))];
   const areas = [...new Set(myListings.map(l => l['Area']).filter(Boolean))];
   const types = [...new Set(myListings.map(l => l['Property Type']).filter(Boolean))];
-  const propCodes = [...new Set(myListings.map(l => l['Property Code']).filter(Boolean))].sort();
 
   const waNumber = waNumberOf(agent['Phone Number']);
   const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi ' + (agent['Full Name']||'') + ', I saw your listings and wanted to connect.')}` : '#';
-
-  // Read any filters already in the URL, so a shared filtered link opens pre-filtered
-  const urlParams = new URLSearchParams(window.location.search);
-  let currentFilters = {
-    purpose: urlParams.get('purpose') === 'For Rent' ? 'For Rent' : 'For Sale',
-    type: urlParams.get('type') || '',
-    zone: urlParams.get('zone') || '',
-    area: urlParams.get('area') || '',
-    price: urlParams.get('price') || ''
-  };
-  let currentCode = urlParams.get('code') || '';
 
   app.innerHTML = `
     <div class="agent-header">
@@ -404,132 +585,64 @@ function renderAgentPage(slug, agents, listings, slugMap){
         <p class="agent-name">${agent['Full Name']||''}</p>
         <p class="agent-meta">${agent['City']||''} · ${myListings.length} listings</p>
       </div>
-      <div class="header-actions">
-        <a class="call-btn" href="${telLinkOf(agent['Phone Number'])}">Call</a>
-        <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
-      </div>
+      <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
     </div>
 
-    <div class="control-bar">
-      <button class="filter-btn" id="filter-open-btn">Filters<span class="filter-badge" id="filter-badge" style="display:none;"></span></button>
+    <div class="filters">
+      <select id="f-purpose">
+        <option value="For Sale">For Sale</option>
+        <option value="For Rent">For Rent</option>
+      </select>
+      <select id="f-type"><option value="">All types</option>${types.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
+      <select id="f-zone"><option value="">All zones</option>${zones.map(z=>`<option value="${z}">${z}</option>`).join('')}</select>
+      <select id="f-area"><option value="">All areas</option>${areas.map(a=>`<option value="${a}">${a}</option>`).join('')}</select>
+      <select id="f-price"></select>
       <select id="f-sort">
         <option value="new">Newest</option>
         <option value="price-asc">Price: low to high</option>
         <option value="price-desc">Price: high to low</option>
       </select>
-      <select id="f-code"><option value="">Prop Code</option>${propCodes.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
-      <button class="share-filtered-btn" id="share-filtered-btn" style="display:none;">Share</button>
     </div>
-
-    <p class="result-count" id="result-count" style="display:none;"></p>
 
     <div id="listing-container"></div>
-
-    <div class="sheet-overlay" id="sheet-overlay"></div>
-    <div class="filter-sheet" id="filter-sheet">
-      <div class="sheet-header">
-        <p class="sheet-title">Filters</p>
-        <button class="sheet-close" id="sheet-close">✕</button>
-      </div>
-      <div class="sheet-body">
-        <div><label>Purpose</label><select id="f-purpose">
-          <option value="For Sale">For Sale</option>
-          <option value="For Rent">For Rent</option>
-        </select></div>
-        <div><label>Type</label><select id="f-type"><option value="">All types</option>${types.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
-        <div><label>Zone</label><select id="f-zone"><option value="">All zones</option>${zones.map(z=>`<option value="${z}">${z}</option>`).join('')}</select></div>
-        <div><label>Area</label><select id="f-area"><option value="">All areas</option>${areas.map(a=>`<option value="${a}">${a}</option>`).join('')}</select></div>
-        <div><label>Price</label><select id="f-price"></select></div>
-      </div>
-      <div class="sheet-footer">
-        <button class="sheet-clear" id="sheet-clear">Clear</button>
-        <button class="sheet-apply" id="sheet-apply">Apply</button>
-      </div>
-    </div>
   `;
-
-  document.getElementById('f-purpose').value = currentFilters.purpose;
-  document.getElementById('f-type').value = currentFilters.type;
-  document.getElementById('f-zone').value = currentFilters.zone;
-  document.getElementById('f-area').value = currentFilters.area;
-  document.getElementById('f-code').value = currentCode;
 
   const priceSelect = document.getElementById('f-price');
   const populatePriceOptions = ()=>{
     const purpose = document.getElementById('f-purpose').value;
     const buckets = purpose === 'For Rent' ? RENT_BUCKETS : SALE_BUCKETS;
     priceSelect.innerHTML = '<option value="">Any price</option>' + buckets.map(b=>`<option value="${b.label}">${b.label}</option>`).join('');
-    priceSelect.value = currentFilters.price;
   };
   populatePriceOptions();
-  document.getElementById('f-purpose').addEventListener('change', populatePriceOptions);
-
-  const sheetOverlay = document.getElementById('sheet-overlay');
-  const filterSheet = document.getElementById('filter-sheet');
-  const openSheet = ()=>{ sheetOverlay.classList.add('open'); filterSheet.classList.add('open'); };
-  const closeSheet = ()=>{ sheetOverlay.classList.remove('open'); filterSheet.classList.remove('open'); };
-  document.getElementById('filter-open-btn').addEventListener('click', openSheet);
-  document.getElementById('sheet-close').addEventListener('click', closeSheet);
-  sheetOverlay.addEventListener('click', closeSheet);
-
-  const updateUrlAndBadge = ()=>{
-    const activeCount = ['type','zone','area','price'].filter(k=>currentFilters[k]).length;
-    const badge = document.getElementById('filter-badge');
-    if(activeCount > 0){ badge.style.display='inline-block'; badge.textContent = activeCount; }
-    else badge.style.display='none';
-
-    const p = new URLSearchParams();
-    p.set('agent', slug);
-    p.set('purpose', currentFilters.purpose);
-    if(currentFilters.type) p.set('type', currentFilters.type);
-    if(currentFilters.zone) p.set('zone', currentFilters.zone);
-    if(currentFilters.area) p.set('area', currentFilters.area);
-    if(currentFilters.price) p.set('price', currentFilters.price);
-    if(currentCode) p.set('code', currentCode);
-    window.history.replaceState({}, '', `${window.location.pathname}?${p.toString()}`);
-  };
 
   const renderListings = ()=>{
+    const purpose = document.getElementById('f-purpose').value;
+    const type = document.getElementById('f-type').value;
+    const zone = document.getElementById('f-zone').value;
+    const area = document.getElementById('f-area').value;
+    const priceLabel = document.getElementById('f-price').value;
     const sort = document.getElementById('f-sort').value;
-    let data;
 
-    if(currentCode){
-      // A specific property code overrides all other filters — show just that one match
-      data = myListings.filter(l => l['Property Code'] === currentCode);
-    } else {
-      const { purpose, type, zone, area, price: priceLabel } = currentFilters;
-      data = myListings.filter(l => purpose === 'For Rent' ? isRent(l) : !isRent(l));
-      if(type) data = data.filter(l => l['Property Type'] === type);
-      if(zone) data = data.filter(l => l['Zone'] === zone);
-      if(area) data = data.filter(l => l['Area'] === area);
-      if(priceLabel){
-        const buckets = purpose === 'For Rent' ? RENT_BUCKETS : SALE_BUCKETS;
-        const b = buckets.find(x => x.label === priceLabel);
-        if(b) data = data.filter(l => { const p = parseFloat(l['Price']); return !isNaN(p) && p >= b.min && p < b.max; });
-      }
-      if(sort === 'price-asc') data.sort((a,b)=> parseFloat(a['Price'])-parseFloat(b['Price']));
-      if(sort === 'price-desc') data.sort((a,b)=> parseFloat(b['Price'])-parseFloat(a['Price']));
-      if(sort === 'new') data.reverse();
+    let data = myListings.filter(l => purpose === 'For Rent' ? isRent(l) : !isRent(l));
+    if(type) data = data.filter(l => l['Property Type'] === type);
+    if(zone) data = data.filter(l => l['Zone'] === zone);
+    if(area) data = data.filter(l => l['Area'] === area);
+    if(priceLabel){
+      const buckets = purpose === 'For Rent' ? RENT_BUCKETS : SALE_BUCKETS;
+      const b = buckets.find(x => x.label === priceLabel);
+      if(b) data = data.filter(l => { const p = parseFloat(l['Price']); return !isNaN(p) && p >= b.min && p < b.max; });
     }
 
-    const anyFilterActive = currentCode || ['type','zone','area','price'].some(k=>currentFilters[k]);
-    const countEl = document.getElementById('result-count');
-    const shareBtn = document.getElementById('share-filtered-btn');
-    if(anyFilterActive){
-      countEl.style.display = 'block';
-      countEl.textContent = `${data.length} listing${data.length===1?'':'s'} match your filters`;
-      shareBtn.style.display = 'inline-block';
-    } else {
-      countEl.style.display = 'none';
-      shareBtn.style.display = 'none';
-    }
+    if(sort === 'price-asc') data.sort((a,b)=> parseFloat(a['Price'])-parseFloat(b['Price']));
+    if(sort === 'price-desc') data.sort((a,b)=> parseFloat(b['Price'])-parseFloat(a['Price']));
+    if(sort === 'new') data.reverse();
 
     const container = document.getElementById('listing-container');
     if(data.length === 0){ container.innerHTML = '<div class="empty">No listings match these filters.</div>'; return; }
 
     container.innerHTML = data.map(l => {
       const photo = (l['Photo URL']||'').split(',')[0].trim();
-      const detailUrl = `${window.location.href.split('?')[0]}?agent=${slug}&listing=${listingIdOf(l)}`;
+      const detailUrl = listingUrlFor(slug, l);
       const shareText = `${l['Property Type']||''} in ${locationLine(l)} — ${formatPrice(l)}\n${detailUrl}`;
       return `
       <a class="listing" href="?agent=${slug}&listing=${listingIdOf(l)}">
@@ -554,64 +667,28 @@ function renderAgentPage(slug, agents, listings, slugMap){
     }).join('');
   };
 
-  document.getElementById('sheet-clear').addEventListener('click', ()=>{
-    document.getElementById('f-purpose').value = 'For Sale';
-    populatePriceOptions();
-    document.getElementById('f-type').value = '';
-    document.getElementById('f-zone').value = '';
-    document.getElementById('f-area').value = '';
-    document.getElementById('f-price').value = '';
-    currentFilters = {purpose:'For Sale', type:'', zone:'', area:'', price:''};
-    updateUrlAndBadge();
-    renderListings();
-    closeSheet();
+  document.getElementById('f-purpose').addEventListener('change', ()=>{ populatePriceOptions(); renderListings(); });
+  ['f-type','f-zone','f-area','f-price','f-sort'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', renderListings);
   });
-
-  document.getElementById('sheet-apply').addEventListener('click', ()=>{
-    currentFilters = {
-      purpose: document.getElementById('f-purpose').value,
-      type: document.getElementById('f-type').value,
-      zone: document.getElementById('f-zone').value,
-      area: document.getElementById('f-area').value,
-      price: document.getElementById('f-price').value
-    };
-    updateUrlAndBadge();
-    renderListings();
-    closeSheet();
-  });
-
-  document.getElementById('f-sort').addEventListener('change', renderListings);
-  document.getElementById('f-code').addEventListener('change', ()=>{
-    currentCode = document.getElementById('f-code').value;
-    updateUrlAndBadge();
-    renderListings();
-  });
-
-  document.getElementById('share-filtered-btn').addEventListener('click', ()=>{
-    const count = document.querySelectorAll('#listing-container .listing').length;
-    const parts = [currentFilters.type || (currentFilters.purpose === 'For Rent' ? 'rentals' : 'properties')];
-    if(currentFilters.zone) parts.push('in ' + currentFilters.zone);
-    if(currentFilters.area) parts.push('(' + currentFilters.area + ')');
-    if(currentFilters.price) parts.push('· ' + currentFilters.price);
-    const text = `${count} ${parts.join(' ')} — ${agent['Full Name']||''}'s listings\n${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-  });
-
-  updateUrlAndBadge();
   renderListings();
 }
 
 function renderPropertyPage(slug, listingId, agents, listings, slugMap){
   const email = slugMap.slugToEmail[slug];
   const agent = agents.find(a => normEmail(a['Email address']) === email);
-  const listing = listings.find(l => normEmail(l['Email address']) === email && (l['Timestamp']||'').toString().trim() === listingId.trim());
+  const requestedId = normalizeListingId(listingId);
+  const listing = listings.find(l =>
+    normEmail(l['Email address']) === email &&
+    propertyIdOf(l) === requestedId
+  );
   if(!agent || !listing){ app.innerHTML = '<div class="empty">Listing not found.</div>'; return; }
 
   const photos = (listing['Photo URL']||'').split(',').map(s=>s.trim()).filter(Boolean);
   const media = buildMediaList(listing, photos);
   const waNumber = waNumberOf(agent['Phone Number']);
   const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi, I\'m interested in the ' + (listing['Property Type']||'property') + ' in ' + locationLine(listing) + '.')}` : '#';
-  const pageUrl = window.location.href.split('?')[0] + `?agent=${slug}&listing=${listingId}`;
+  const pageUrl = listingUrlFor(slug, listing);
 
   window.__media = media; // used by switchMedia
 
@@ -650,10 +727,7 @@ function renderPropertyPage(slug, listingId, agents, listings, slugMap){
         <p class="agent-name">${agent['Full Name']||''}</p>
         <p class="agent-meta">${agent['City']||''}</p>
       </div>
-      <div class="header-actions" style="margin-left:0;">
-        <a class="call-btn" href="${telLinkOf(agent['Phone Number'])}">Call</a>
-        <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
-      </div>
+      <a class="reach-btn" href="${waLink}" target="_blank" rel="noopener">Reach out</a>
     </div>
 
     <button class="detail-share" onclick="shareListing(this)" data-text="${encodeURIComponent((listing['Property Type']||'') + ' in ' + locationLine(listing) + ' — ' + formatPrice(listing) + '\\n' + pageUrl)}">Share this listing</button>
@@ -664,23 +738,73 @@ function renderPropertyPage(slug, listingId, agents, listings, slugMap){
 
 function renderMainMedia(m){
   const el = document.getElementById('gallery-main');
+  if(!el) return;
+
   const badge = el.querySelector('.tag-badge');
+
   el.classList.remove('yt-mode','ig-mode');
   el.style.backgroundImage = '';
   el.innerHTML = '';
+
   if(badge) el.appendChild(badge);
 
   if(m.type === 'photo'){
-    el.style.backgroundImage = `url('${m.src}')`;
+    const safeSrc = safeUrl(m.src);
+    if(safeSrc){
+      el.style.backgroundImage = `url('${safeSrc.replace(/'/g, '%27')}')`;
+    }
+
   } else if(m.type === 'youtube'){
     el.classList.add('yt-mode');
-    el.insertAdjacentHTML('beforeend', `<iframe src="${m.embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`);
+
+    const safeEmbed = safeUrl(m.embedUrl);
+    if(safeEmbed){
+      const iframe = document.createElement('iframe');
+      iframe.src = safeEmbed;
+      iframe.title = 'YouTube property video';
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.loading = 'eager';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      el.appendChild(iframe);
+    }
+
   } else if(m.type === 'instagram'){
     el.classList.add('ig-mode');
-    el.insertAdjacentHTML('beforeend', `<blockquote class="instagram-media" data-instgrm-permalink="${m.permalink}" data-instgrm-version="14" style="margin:0;width:100%;"></blockquote>`);
-    loadInstagramEmbed();
+
+    const safeEmbed = safeUrl(m.embedUrl);
+    const safePermalink = safeUrl(m.permalink);
+
+    if(safeEmbed){
+      const iframe = document.createElement('iframe');
+      iframe.src = safeEmbed;
+      iframe.title = 'Instagram property video';
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.loading = 'eager';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+
+      iframe.onerror = () => {
+        iframe.remove();
+        if(safePermalink){
+          const fallback = document.createElement('a');
+          fallback.href = safePermalink;
+          fallback.target = '_blank';
+          fallback.rel = 'noopener noreferrer';
+          fallback.textContent = 'Open Instagram video →';
+          fallback.style.cssText =
+            'display:flex;align-items:center;justify-content:center;' +
+            'min-height:160px;width:100%;font-weight:600;' +
+            'color:#1f6f5c;text-decoration:none;';
+          el.appendChild(fallback);
+        }
+      };
+
+      el.appendChild(iframe);
+    }
   }
 }
+
 
 window.switchMedia = function(index){
   const m = window.__media[index];
@@ -691,11 +815,26 @@ window.switchMedia = function(index){
 
 window.shareListing = function(btn){
   const text = decodeURIComponent(btn.getAttribute('data-text'));
-  if(navigator.share){ navigator.share({text}); }
-  else { navigator.clipboard.writeText(text); showToast('Copied — paste it into WhatsApp'); }
+
+  if(navigator.share){
+    navigator.share({text}).catch(() => {
+      if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(text);
+        showToast('Copied — paste it into WhatsApp');
+      }
+    });
+  }else if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(text);
+    showToast('Copied — paste it into WhatsApp');
+  }else{
+    showToast('Copy the link manually');
+  }
 };
 
 init();
 </script>
+
+
+
 </body>
 </html>
