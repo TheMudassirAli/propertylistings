@@ -1,0 +1,35 @@
+name: Generate share preview pages
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # runs every 30 minutes
+  workflow_dispatch: {}       # lets you trigger it manually from the Actions tab
+  push:
+    branches: [ main ]
+    paths:
+      - 'generate-previews.js'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install papaparse
+
+      - run: node generate-previews.js
+
+      - name: Commit and push if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add a/ l/
+          git diff --staged --quiet || git commit -m "Auto-update share preview pages"
+          git push
