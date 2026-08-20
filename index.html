@@ -333,6 +333,19 @@ function buildSlugMap(agents){
 
 function listingIdOf(l){ return encodeURIComponent((l['Timestamp']||'').toString()); }
 
+// The site's own base URL (e.g. https://themudassirali.github.io/propertylistings) —
+// used to build links to the auto-generated static preview pages under /l/ and /a/,
+// which are what actually shows a photo when shared on WhatsApp/Instagram.
+function siteBaseUrl(){
+  return window.location.href.split('?')[0].replace(/\/index\.html$/, '').replace(/\/$/, '');
+}
+function sanitizeListingId(ts){
+  return (ts||'').toString().trim().replace(/[\/: ]+/g,'-');
+}
+function previewListingUrl(slug, l){
+  return `${siteBaseUrl()}/l/${slug}/${sanitizeListingId(l['Timestamp'])}/`;
+}
+
 async function init(){
   let agents, listings;
   try{
@@ -529,8 +542,7 @@ function renderAgentPage(slug, agents, listings, slugMap){
 
     container.innerHTML = data.map(l => {
       const photo = (l['Photo URL']||'').split(',')[0].trim();
-      const detailUrl = `${window.location.href.split('?')[0]}?agent=${slug}&listing=${listingIdOf(l)}`;
-      const shareText = `${l['Property Type']||''} in ${locationLine(l)} — ${formatPrice(l)}\n${detailUrl}`;
+      const shareText = `${l['Property Type']||''} in ${locationLine(l)} — ${formatPrice(l)}\n${previewListingUrl(slug, l)}`;
       return `
       <a class="listing" href="?agent=${slug}&listing=${listingIdOf(l)}">
         <div class="listing-img" style="${photo ? `background-image:url('${photo}')` : ''}">
@@ -611,7 +623,7 @@ function renderPropertyPage(slug, listingId, agents, listings, slugMap){
   const media = buildMediaList(listing, photos);
   const waNumber = waNumberOf(agent['Phone Number']);
   const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi, I\'m interested in the ' + (listing['Property Type']||'property') + ' in ' + locationLine(listing) + '.')}` : '#';
-  const pageUrl = window.location.href.split('?')[0] + `?agent=${slug}&listing=${listingId}`;
+  const pageUrl = previewListingUrl(slug, listing);
 
   window.__media = media; // used by switchMedia
 
