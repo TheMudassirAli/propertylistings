@@ -15,9 +15,15 @@ const AGENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCXA3NU
 const LISTINGS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVB8CeQwJ75S5e0K5fyHO-ubc3cf28xib_xc3xFSp274NNRfJPx6ZFamqmqOADAR2Fb8N2t7ie0XJP/pub?output=csv';
 const SITE_ROOT = 'https://themudassirali.github.io/propertylistings';
 
-function fetchCSV(url) {
+function fetchCSV(url, redirectsLeft = 5) {
   return new Promise((resolve, reject) => {
     https.get(url, res => {
+      // Google's published CSV links issue a redirect before serving the
+      // actual file — follow it manually, since Node's https.get doesn't.
+      if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location && redirectsLeft > 0) {
+        res.resume(); // discard this response body
+        return resolve(fetchCSV(res.headers.location, redirectsLeft - 1));
+      }
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
