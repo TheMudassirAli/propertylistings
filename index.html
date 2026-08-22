@@ -191,6 +191,24 @@
   }
   .toast.show{opacity:1;}
   h1.page-title{font-size:18px;margin:0 0 16px;}
+
+  .landing-hero{padding:24px 0 8px;}
+  .landing-eyebrow{font-size:12px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 10px;}
+  .landing-title{font-size:26px;font-weight:700;line-height:1.25;margin:0 0 14px;}
+  .landing-sub{font-size:15px;color:var(--ink-soft);line-height:1.6;margin:0 0 22px;max-width:480px;}
+  .landing-cta{
+    display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+    font-size:15px;font-weight:600;padding:13px 22px;border-radius:999px;
+  }
+  .landing-steps{display:flex;flex-direction:column;gap:18px;margin:36px 0 8px;}
+  .landing-step{display:flex;gap:14px;align-items:flex-start;}
+  .landing-step-num{
+    width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;
+  }
+  .landing-step-title{font-size:15px;font-weight:600;margin:2px 0 3px;}
+  .landing-step-desc{font-size:13px;color:var(--ink-soft);line-height:1.5;margin:0;max-width:440px;}
+  .landing-footer{font-size:12px;color:var(--ink-faint);margin:32px 0 8px;}
 </style>
 </head>
 <body>
@@ -206,6 +224,7 @@
    ============================================================ */
 const AGENTS_CSV_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCXA3NU7egj4jXKZMNZOBtsQ9zSB3e6FaqyrFsp7Sjh3yyqexI8NxNHUsSCDdKCWKWKGPms4oWwnil/pub?output=csv";
 const LISTINGS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVB8CeQwJ75S5e0K5fyHO-ubc3cf28xib_xc3xFSp274NNRfJPx6ZFamqmqOADAR2Fb8N2t7ie0XJP/pub?output=csv";
+const REGISTER_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdoX4EOYy9BewVLO4YT0BKA1bVKqv3X3bv3-xSrUN1T4JVKvQ/viewform";
 /* ============================================================ */
 
 const SALE_BUCKETS = [
@@ -355,10 +374,50 @@ async function init(){
   // everywhere else (WhatsApp shares, the plain domain, etc.)
   const agentSlug = window.__FORCED_AGENT_SLUG || params.get('agent');
   const listingId = params.get('listing');
+  const adminKey = params.get('admin');
+  const ADMIN_KEY = '6364346054'; // secret value — change this any time by editing here
 
   if(agentSlug && listingId) renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
   else if(agentSlug) renderAgentPage(agentSlug, agents, listings, slugMap);
-  else renderDirectory(agents, listings, slugMap);
+  else if(adminKey === ADMIN_KEY) renderDirectory(agents, listings, slugMap);
+  else renderLandingPage();
+}
+
+function renderLandingPage(){
+  app.innerHTML = `
+    <div class="landing-hero">
+      <p class="landing-eyebrow">For independent property agents</p>
+      <h1 class="landing-title">One clean page for all your listings.</h1>
+      <p class="landing-sub">Stop scattering your properties across WhatsApp forwards and Instagram posts. Get one shareable page with all your listings, photos, and details — easy to send, easy to browse.</p>
+      <a class="landing-cta" href="${REGISTER_FORM_URL}" target="_blank" rel="noopener">Register as an Agent</a>
+    </div>
+
+    <div class="landing-steps">
+      <div class="landing-step">
+        <div class="landing-step-num">1</div>
+        <div>
+          <p class="landing-step-title">Register</p>
+          <p class="landing-step-desc">A short one-time form — your name, phone, city, and a photo. Takes about two minutes.</p>
+        </div>
+      </div>
+      <div class="landing-step">
+        <div class="landing-step-num">2</div>
+        <div>
+          <p class="landing-step-title">Add your listings</p>
+          <p class="landing-step-desc">Fill a simple form for each property — type, price, locality, photos. No app to install.</p>
+        </div>
+      </div>
+      <div class="landing-step">
+        <div class="landing-step-num">3</div>
+        <div>
+          <p class="landing-step-title">Share your page</p>
+          <p class="landing-step-desc">Get one clean link with all your listings, filterable and easy to share on WhatsApp or Instagram.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="landing-footer">Currently supporting agents in Bangalore.</p>
+  `;
 }
 
 function renderDirectory(agents, listings, slugMap){
