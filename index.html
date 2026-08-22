@@ -349,7 +349,11 @@ async function init(){
 
   const slugMap = buildSlugMap(agents);
   const params = new URLSearchParams(window.location.search);
-  const agentSlug = params.get('agent');
+  // window.__FORCED_AGENT_SLUG is injected by the Cloudflare Worker when
+  // visiting via an agent subdomain (e.g. mudassir-ali.mypropvault.in) —
+  // check that first, then fall back to the normal ?agent= link used
+  // everywhere else (WhatsApp shares, the plain domain, etc.)
+  const agentSlug = window.__FORCED_AGENT_SLUG || params.get('agent');
   const listingId = params.get('listing');
 
   if(agentSlug && listingId) renderPropertyPage(agentSlug, listingId, agents, listings, slugMap);
