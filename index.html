@@ -342,9 +342,16 @@ function buildSlugMap(agents){
   return {emailToSlug, slugToEmail};
 }
 
-function listingIdOf(l){ return encodeURIComponent((l['Timestamp']||'').toString()); }
+// Property Code (e.g. "MA-05") is the preferred listing identifier — clean,
+// no special characters to sanitize, unlike a raw timestamp. Falls back to
+// the timestamp only if a listing somehow doesn't have a code yet (e.g. the
+// script hasn't processed it), and keeps any already-shared timestamp-based
+// links working via the fallback match in renderPropertyPage below.
+function listingIdOf(l){
+  return (l['Property Code'] || '').trim() || encodeURIComponent((l['Timestamp']||'').toString());
+}
 
-// The site's own base URL (e.g. https://themudassirali.github.io/propertylistings) —
+// The site's own base URL (e.g. https://mypropvault.in) —
 // used to build links to the auto-generated static preview pages under /l/ and /a/,
 // which are what actually shows a photo when shared on WhatsApp/Instagram.
 function siteBaseUrl(){
@@ -354,7 +361,8 @@ function sanitizeListingId(ts){
   return (ts||'').toString().trim().replace(/[\/: ]+/g,'-');
 }
 function previewListingUrl(slug, l){
-  return `${siteBaseUrl()}/l/${slug}/${sanitizeListingId(l['Timestamp'])}/`;
+  const id = (l['Property Code'] || '').trim() || sanitizeListingId(l['Timestamp']);
+  return `${siteBaseUrl()}/l/${slug}/${id}/`;
 }
 
 async function init(){
@@ -674,14 +682,19 @@ function renderAgentPage(slug, agents, listings, slugMap){
 function renderPropertyPage(slug, listingId, agents, listings, slugMap){
   const email = slugMap.slugToEmail[slug];
   const agent = agents.find(a => normEmail(a['Email address']) === email);
-  const listing = listings.find(l => normEmail(l['Email address']) === email && (l['Timestamp']||'').toString().trim() === listingId.trim());
+  const listing = listings.find(l => {
+    if(normEmail(l['Email address']) !== email) return false;
+    const code = (l['Property Code']||'').trim();
+    if(code && code === listingId.trim()) return true;
+    return (l['Timestamp']||'').toString().trim() === listingId.trim();
+  });
   if(!agent || !listing){ app.innerHTML = '<div class="empty">Listing not found.</div>'; return; }
 
   const photos = (listing['Photo URL']||'').split(',').map(s=>s.trim()).filter(Boolean);
   const media = buildMediaList(listing, photos);
   const waNumber = waNumberOf(agent['Phone Number']);
-  const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi, I\'m interested in the ' + (listing['Property Type']||'property') + ' in ' + locationLine(listing) + '.')}` : '#';
   const pageUrl = previewListingUrl(slug, listing);
+  const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi, I\'m interested in the ' + (listing['Property Type']||'property') + ' in ' + locationLine(listing) + '.\n' + pageUrl)}` : '#';
 
   window.__media = media; // used by switchMedia
 
