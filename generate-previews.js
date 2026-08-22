@@ -101,6 +101,8 @@ async function main() {
     const rawId = (l['Timestamp'] || '').toString().trim();
     if (!rawId) return;
     const safeId = sanitizeId(rawId);
+    const code = (l['Property Code'] || '').trim();
+    const primaryId = code || safeId; // Property Code is now the preferred, clean identifier
 
     const isRent = (l['Listing Purpose'] || '').toLowerCase().includes('rent');
     const priceNum = parseFloat(l['Price']);
@@ -112,8 +114,14 @@ async function main() {
     const photos = (l['Photo URL'] || '').split(',').map(s => s.trim()).filter(Boolean);
     const image = photos[0] || '';
 
-    const redirectUrl = `${SITE_ROOT}/?agent=${slug}&listing=${encodeURIComponent(rawId)}`;
-    writeFile(`l/${slug}/${safeId}/index.html`, redirectPage(title, desc, image, 'website', redirectUrl));
+    const redirectUrl = `${SITE_ROOT}/?agent=${slug}&listing=${encodeURIComponent(primaryId)}`;
+    writeFile(`l/${slug}/${primaryId}/index.html`, redirectPage(title, desc, image, 'website', redirectUrl));
+
+    // Also keep the old timestamp-based path working, in case this exact
+    // link was already shared with someone before Property Codes existed.
+    if (code && safeId !== primaryId) {
+      writeFile(`l/${slug}/${safeId}/index.html`, redirectPage(title, desc, image, 'website', redirectUrl));
+    }
   });
 
   console.log(`Generated ${agents.length} agent page(s) and ${listings.length} listing page(s).`);
