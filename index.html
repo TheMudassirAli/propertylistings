@@ -488,14 +488,17 @@ function renderAgentPage(slug, agents, listings, slugMap){
     else badge.style.display='none';
 
     const p = new URLSearchParams();
-    p.set('agent', slug);
-    p.set('purpose', currentFilters.purpose);
+    // On a subdomain, the Worker already injects the agent identity on every
+    // load — no need to also carry it in the visible URL.
+    if(!window.__FORCED_AGENT_SLUG) p.set('agent', slug);
+    if(currentFilters.purpose !== 'For Sale') p.set('purpose', currentFilters.purpose);
     if(currentFilters.type) p.set('type', currentFilters.type);
     if(currentFilters.zone) p.set('zone', currentFilters.zone);
     if(currentFilters.area) p.set('area', currentFilters.area);
     if(currentFilters.price) p.set('price', currentFilters.price);
     if(currentCode) p.set('code', currentCode);
-    window.history.replaceState({}, '', `${window.location.pathname}?${p.toString()}`);
+    const qs = p.toString();
+    window.history.replaceState({}, '', `${window.location.pathname}${qs ? '?' + qs : ''}`);
   };
 
   const renderListings = ()=>{
